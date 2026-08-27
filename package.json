@@ -10,6 +10,7 @@
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
     "db:seed:roles": "tsx scripts/seed-rbac.ts",
+    "db:seed:master-data": "tsx scripts/seed-master-data.ts",
     "create:super-admin": "tsx scripts/create-super-admin.ts"
   },
   "dependencies": {
