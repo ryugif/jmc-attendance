@@ -55,6 +55,7 @@ interface DepartmentOption {
 }
 
 const emptyEducationRecord = { level: "", schoolName: "", graduationYear: new Date().getFullYear() };
+const educationLevelOptions = ["SD", "SMP", "SMA", "SMK", "D1", "D2", "D3", "D4", "S1", "S2", "S3"];
 
 export default function CreateEmployeePage() {
     const router = useRouter();
@@ -648,7 +649,22 @@ export default function CreateEmployeePage() {
                                     <div key={field.id} className="grid gap-3 rounded-md border border-input p-3 md:grid-cols-[1fr_1.5fr_0.8fr_auto]">
                                         <div>
                                             <label className="mb-1 block text-sm font-medium">Level</label>
-                                            <input className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" {...register(`education.${index}.level` as const)} />
+                                            <Controller
+                                                name={`education.${index}.level` as const}
+                                                control={control}
+                                                render={({ field: levelField }) => (
+                                                    <Select value={levelField.value || ""} onValueChange={levelField.onChange}>
+                                                        <SelectTrigger className="w-full" aria-invalid={!!errors.education?.[index]?.level}>
+                                                            <SelectValue placeholder="Select level" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {educationLevelOptions.map((option) => (
+                                                                <SelectItem key={option} value={option}>{option}</SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                )}
+                                            />
                                             <FieldError errors={errors.education?.[index]?.level ? [errors.education[index].level] : []} />
                                         </div>
                                         <div>
