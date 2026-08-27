@@ -38,7 +38,7 @@ const schema = z.object({
 
 type ProvinceFormData = z.infer<typeof schema>
 
-interface ProvinceData {
+export interface ProvinceData {
     id: string
     name: string
     description: string | null
