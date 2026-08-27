@@ -14,6 +14,7 @@ import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
 import { generateCaptcha, verifyCaptcha } from "@/lib/captcha";
+import { checkLoginEligibility } from "@/app/sign-in/actions";
 
 const signInSchema = z.object({
     identifier: z.string().trim().min(3, "Enter your username, email, or phone number."),
@@ -61,6 +62,12 @@ export default function SignInPage() {
         }
 
         try {
+            const eligibility = await checkLoginEligibility(normalizedIdentifier);
+
+            if (!eligibility.allowed) {
+                throw new Error("Your account is inactive. Please contact the administrator.");
+            }
+
             const isEmail = normalizedIdentifier.includes("@");
             const isPhone = /^\+?[0-9\s()\-]{7,}$/.test(normalizedIdentifier);
 
@@ -86,7 +93,11 @@ export default function SignInPage() {
 
             router.replace("/dashboard");
         } catch (error) {
-            const message = error instanceof Error ? error.message : "Unable to sign in with the provided credentials.";
+            const rawMessage = error instanceof Error ? error.message : "Unable to sign in with the provided credentials.";
+            const message = rawMessage.toLowerCase().includes("inactive") || rawMessage.toLowerCase().includes("user_inactive")
+                ? "Your account is inactive. Please contact the administrator."
+                : rawMessage;
+
             form.setError("root", { message });
 
             setCaptcha(generateCaptcha());

@@ -3,6 +3,9 @@ import { redirect } from "next/navigation";
 
 import { auth } from "@/lib/auth";
 import AppShell from "@/components/app-shell/app-shell";
+import { db } from "@/lib/db";
+import { user } from "@/lib/schema";
+import { eq } from "drizzle-orm";
 
 export default async function DashboardLayout({
     children,
@@ -15,6 +18,16 @@ export default async function DashboardLayout({
     });
 
     if (!session) {
+        redirect("/sign-in");
+    }
+
+    const [currentUser] = await db
+        .select({ isActive: user.isActive })
+        .from(user)
+        .where(eq(user.id, session.user.id))
+        .limit(1);
+
+    if (!currentUser || currentUser.isActive === false) {
         redirect("/sign-in");
     }
 
