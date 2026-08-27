@@ -119,7 +119,11 @@ export default function DistrictSettingsPage() {
     };
 
     useEffect(() => {
-        fetchDistricts(1);
+        const timeoutId = window.setTimeout(() => {
+            void fetchDistricts(1);
+        }, 0);
+
+        return () => window.clearTimeout(timeoutId);
     }, []);
 
     useEffect(() => {

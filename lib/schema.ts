@@ -1,7 +1,9 @@
 import { sql } from "drizzle-orm";
 import {
     boolean,
+    date,
     index,
+    int,
     mysqlEnum,
     mysqlTable,
     text,
@@ -309,6 +311,81 @@ export const jobPosition = mysqlTable(
     ],
 );
 
+export const employee = mysqlTable(
+    "employee",
+    {
+        id: varchar("id", { length: 36 }).primaryKey(),
+        nip: varchar("nip", { length: 50 }).notNull().unique(),
+        name: varchar("name", { length: 255 }).notNull(),
+        email: varchar("email", { length: 255 }).notNull(),
+        phoneNumber: varchar("phone_number", { length: 50 }).notNull(),
+        photoUrl: text("photo_url"),
+        placeOfBirth: varchar("place_of_birth", { length: 255 }).notNull(),
+        districtId: varchar("district_id", { length: 36 }).references(() => district.id, {
+            onDelete: "set null",
+        }),
+        districtName: varchar("district_name", { length: 255 }).notNull(),
+        regencyId: varchar("regency_id", { length: 36 }).references(() => regency.id, {
+            onDelete: "set null",
+        }),
+        regencyName: varchar("regency_name", { length: 255 }).notNull(),
+        provinceId: varchar("province_id", { length: 36 }).references(() => province.id, {
+            onDelete: "set null",
+        }),
+        provinceName: varchar("province_name", { length: 255 }).notNull(),
+        fullAddress: text("full_address").notNull(),
+        homeToOfficeDistance: int("home_to_office_distance").notNull(),
+        dateOfBirth: date("date_of_birth").notNull(),
+        age: int("age").notNull(),
+        maritalStatus: mysqlEnum("marital_status", ["Married", "Not Married"]).notNull(),
+        numberOfChildren: int("number_of_children").notNull().default(0),
+        joinDate: date("join_date").notNull(),
+        position: mysqlEnum("position", ["Manager", "Staff", "Intern"]).notNull(),
+        departmentId: varchar("department_id", { length: 36 }).references(() => department.id, {
+            onDelete: "set null",
+        }),
+        contractStatus: mysqlEnum("contract_status", [
+            "Permanent",
+            "Contract",
+            "Internship",
+            "Probation",
+        ]).notNull().default("Permanent"),
+        status: mysqlEnum("status", ["Active", "Inactive"]).notNull().default("Active"),
+        createdAt: timestamp("created_at", { fsp: 3 })
+            .default(sql`CURRENT_TIMESTAMP(3)`)
+            .notNull(),
+        updatedAt: timestamp("updated_at", { fsp: 3 })
+            .default(sql`CURRENT_TIMESTAMP(3)`)
+            .$onUpdate(() => new Date())
+            .notNull(),
+    },
+    (table) => [
+        index("employee_name_idx").on(table.name),
+        index("employee_nip_idx").on(table.nip),
+        index("employee_department_id_idx").on(table.departmentId),
+        index("employee_status_idx").on(table.status),
+    ],
+);
+
+export const employeeEducation = mysqlTable(
+    "employee_education",
+    {
+        id: varchar("id", { length: 36 }).primaryKey(),
+        employeeId: varchar("employee_id", { length: 36 })
+            .notNull()
+            .references(() => employee.id, { onDelete: "cascade" }),
+        level: varchar("level", { length: 100 }).notNull(),
+        schoolName: varchar("school_name", { length: 255 }).notNull(),
+        graduationYear: int("graduation_year").notNull(),
+        createdAt: timestamp("created_at", { fsp: 3 })
+            .default(sql`CURRENT_TIMESTAMP(3)`)
+            .notNull(),
+    },
+    (table) => [
+        index("employee_education_employee_id_idx").on(table.employeeId),
+    ],
+);
+
 export const authSchema = {
     user,
     session,
@@ -322,4 +399,6 @@ export const authSchema = {
     district,
     department,
     jobPosition,
+    employee,
+    employeeEducation,
 } as const;
