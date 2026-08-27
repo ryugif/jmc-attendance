@@ -1,13 +1,7 @@
-import "server-only";
-
 import { drizzle } from "drizzle-orm/mysql2";
-import { createPool } from "mysql2/promise";
+import { createPool } from "mysql2";
 
-const databaseUrl = process.env.DATABASE_URL;
-
-if (!databaseUrl) {
-    throw new Error("Missing required environment variable: DATABASE_URL");
-}
+const databaseUrl = process.env.DATABASE_URL ?? "mysql://better_auth:better_auth@127.0.0.1:3306/better_auth";
 
 const pool = createPool({
     uri: databaseUrl,
