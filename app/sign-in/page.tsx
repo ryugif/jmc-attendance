@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -26,8 +26,13 @@ type SignInValues = z.infer<typeof signInSchema>;
 
 export default function SignInPage() {
     const router = useRouter();
-    const [captcha, setCaptcha] = useState(() => generateCaptcha());
+    const [captcha, setCaptcha] = useState<{ code: string; image: string } | null>(null);
     const rememberMeId = "rememberMe";
+
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setCaptcha(generateCaptcha());
+    }, []);
 
     const form = useForm<SignInValues>({
         resolver: zodResolver(signInSchema),
@@ -45,7 +50,7 @@ export default function SignInPage() {
 
         form.clearErrors("captcha");
 
-        if (!verifyCaptcha(normalizedCaptcha, captcha.code)) {
+        if (!captcha || !verifyCaptcha(normalizedCaptcha, captcha.code)) {
             form.setError("captcha", {
                 type: "manual",
                 message: "Captcha code is incorrect. Please try again.",
@@ -147,7 +152,7 @@ export default function SignInPage() {
                             </div>
 
                             <div className="flex items-center justify-center overflow-hidden rounded-lg border border-dashed border-slate-300 bg-white p-2">
-                                {captcha.image ? (
+                                {captcha ? (
                                     <Image
                                         src={captcha.image}
                                         alt="Captcha challenge"
@@ -156,7 +161,11 @@ export default function SignInPage() {
                                         unoptimized
                                         className="h-16 w-full rounded-md object-cover"
                                     />
-                                ) : null}
+                                ) : (
+                                    <div className="flex h-16 w-full items-center justify-center text-sm text-slate-400">
+                                        Loading captcha...
+                                    </div>
+                                )}
                             </div>
 
                             <Input
@@ -165,6 +174,7 @@ export default function SignInPage() {
                                 placeholder="Type the code shown"
                                 autoComplete="off"
                                 aria-invalid={Boolean(form.formState.errors.captcha)}
+                                maxLength={5}
                                 {...form.register("captcha")}
                             />
                             <FieldError errors={[form.formState.errors.captcha]} />
