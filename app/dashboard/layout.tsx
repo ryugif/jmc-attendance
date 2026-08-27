@@ -1,8 +1,8 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
-import DashboardShell from "./dashboard-shell";
 import { auth } from "@/lib/auth";
+import AppShell from "@/components/app-shell/app-shell";
 
 export default async function DashboardLayout({
     children,
@@ -19,10 +19,10 @@ export default async function DashboardLayout({
     }
 
     return (
-        <DashboardShell
+        <AppShell
             userName={session.user.name || "User Name"}
         >
             {children}
-        </DashboardShell>
+        </AppShell>
     );
 }
