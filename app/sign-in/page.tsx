@@ -43,13 +43,15 @@ export default function SignInPage() {
         const normalizedIdentifier = values.identifier.trim();
         const normalizedCaptcha = values.captcha.trim();
 
+        form.clearErrors("captcha");
+
         if (!verifyCaptcha(normalizedCaptcha, captcha.code)) {
             form.setError("captcha", {
                 type: "manual",
                 message: "Captcha code is incorrect. Please try again.",
             });
             setCaptcha(generateCaptcha());
-            form.resetField("captcha");
+            form.resetField("captcha", { keepError: true });
             return;
         }
 
