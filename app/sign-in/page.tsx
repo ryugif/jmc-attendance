@@ -95,8 +95,8 @@ export default function SignInPage() {
     };
 
     return (
-        <main className="flex min-h-screen items-center justify-center bg-slate-100 p-4">
-            <Card className="w-full max-w-md border-slate-200 bg-white shadow-xl">
+        <main className="flex min-h-screen items-center justify-center bg-zinc-100 p-4">
+            <Card className="w-full max-w-md border-zinc-200 bg-white shadow-xl">
                 <CardHeader className="space-y-2">
                     <div className="flex items-center justify-center">
                         <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-600 text-lg font-bold text-white shadow-sm">
@@ -135,10 +135,10 @@ export default function SignInPage() {
 
                         <Field
                             data-invalid={Boolean(form.formState.errors.captcha)}
-                            className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-3"
+                            className="space-y-3 rounded-xl border border-zinc-200 bg-zinc-50 p-3"
                         >
                             <div className="flex items-center justify-between gap-3">
-                                <FieldLabel htmlFor="captcha" className="text-slate-700">
+                                <FieldLabel htmlFor="captcha" className="text-zinc-700">
                                     Captcha
                                 </FieldLabel>
                                 <Button
@@ -151,7 +151,7 @@ export default function SignInPage() {
                                 </Button>
                             </div>
 
-                            <div className="flex items-center justify-center overflow-hidden rounded-lg border border-dashed border-slate-300 bg-white p-2">
+                            <div className="flex items-center justify-center overflow-hidden rounded-lg border border-dashed border-zinc-300 bg-white p-2">
                                 {captcha ? (
                                     <Image
                                         src={captcha.image}
@@ -162,7 +162,7 @@ export default function SignInPage() {
                                         className="h-16 w-full rounded-md object-cover"
                                     />
                                 ) : (
-                                    <div className="flex h-16 w-full items-center justify-center text-sm text-slate-400">
+                                    <div className="flex h-16 w-full items-center justify-center text-sm text-zinc-400">
                                         Loading captcha...
                                     </div>
                                 )}
@@ -191,7 +191,7 @@ export default function SignInPage() {
                                             checked={Boolean(field.value)}
                                             onCheckedChange={(checked) => field.onChange(Boolean(checked))}
                                         />
-                                        <FieldLabel htmlFor={rememberMeId} className="cursor-pointer text-sm text-slate-700">
+                                        <FieldLabel htmlFor={rememberMeId} className="cursor-pointer text-sm text-zinc-700">
                                             Remember me
                                         </FieldLabel>
                                     </Field>
