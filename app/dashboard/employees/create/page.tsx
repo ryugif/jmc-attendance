@@ -669,12 +669,12 @@ export default function CreateEmployeePage() {
                                         </div>
                                         <div>
                                             <label className="mb-1 block text-sm font-medium">School Name</label>
-                                            <input className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" {...register(`education.${index}.schoolName` as const)} />
+                                            <Input {...register(`education.${index}.schoolName` as const)} placeholder="Enter school name" />
                                             <FieldError errors={errors.education?.[index]?.schoolName ? [errors.education[index].schoolName] : []} />
                                         </div>
                                         <div>
                                             <label className="mb-1 block text-sm font-medium">Grad. Year</label>
-                                            <input type="number" className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" {...register(`education.${index}.graduationYear` as const)} />
+                                            <Input type="number" {...register(`education.${index}.graduationYear` as const)} />
                                             <FieldError errors={errors.education?.[index]?.graduationYear ? [errors.education[index].graduationYear] : []} />
                                         </div>
                                         <div className="flex items-end">
