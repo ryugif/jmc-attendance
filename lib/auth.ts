@@ -4,6 +4,7 @@ import { betterAuth } from "better-auth/minimal";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 import { db } from "./db";
 import { authSchema } from "./schema";
+import { username } from "better-auth/plugins";
 
 function requireEnv(name: string, value: string | undefined): string {
     if (!value) throw new Error(`Missing required environment variable: ${name}`);
@@ -17,4 +18,7 @@ export const auth = betterAuth({
         provider: "mysql",
         schema: authSchema,
     }),
+    plugins: [
+        username()
+    ]
 });

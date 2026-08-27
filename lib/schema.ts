@@ -14,6 +14,7 @@ export const user = mysqlTable("user", {
     name: varchar("name", { length: 255 }).notNull(),
     email: varchar("email", { length: 255 }).notNull().unique(),
     emailVerified: boolean("email_verified").default(false).notNull(),
+    username: varchar("username", { length: 255 }).notNull().unique(),
     image: text("image"),
     createdAt: timestamp("created_at", { fsp: 3 })
         .default(sql`CURRENT_TIMESTAMP(3)`)
