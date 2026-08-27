@@ -25,7 +25,9 @@ export const auth = betterAuth({
         requireEmailVerification: false,
     },
     plugins: [
-        username(),
+        username({
+            displayUsername: false,
+        }),
         phoneNumber(),
         admin(),
     ],
