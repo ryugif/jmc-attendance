@@ -99,8 +99,13 @@ export default function SignInPage() {
             <Card className="w-full max-w-md border-zinc-200 bg-white shadow-xl">
                 <CardHeader className="space-y-2">
                     <div className="flex items-center justify-center">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-600 text-lg font-bold text-white shadow-sm">
-                            JMC
+                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-black text-lg font-bold text-white shadow-sm">
+                            <Image
+                                src="/favicon.png"
+                                alt="JMC Logo"
+                                width={48}
+                                height={48}
+                            />
                         </div>
                     </div>
                     <CardTitle className="text-center text-2xl">Sign In</CardTitle>
