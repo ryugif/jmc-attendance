@@ -10,9 +10,11 @@ import { useRouter } from "next/navigation";
 import GlobalHeader from "@/components/global-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { Field, FieldContent, FieldError, FieldGroup, FieldLabel, FieldSet } from "@/components/ui/field";
-import { createEmployee, getDepartmentOptions, searchDistricts } from "@/app/dashboard/employees/actions";
-import { Textarea } from "../../../../components/ui/textarea";
+import { createEmployee, getDepartmentOptions, getDistrictOptions, getProvinceOptions, getRegencyOptions } from "@/app/dashboard/employees/actions";
+import { IconTrash } from "@tabler/icons-react";
 
 const educationSchema = z.object({
     level: z.string().min(1, "Education level is required"),
@@ -21,7 +23,7 @@ const educationSchema = z.object({
 });
 
 const employeeSchema = z.object({
-    nip: z.string().trim().min(8, "NIP must be at least 8 numeric characters").regex(/^\d+$/, "NIP must contain only numeric characters"),
+    nip: z.string().min(8, "NIP must be at least 8 numeric characters").regex(/^\d+$/, "NIP must contain only numeric characters without spaces"),
     name: z.string().trim().min(1, "Employee name is required").regex(/^[A-Za-z0-9' ]+$/, "Name may only contain letters, numbers, apostrophes, and spaces"),
     email: z.string().trim().email("Please enter a valid email"),
     phoneNumber: z.string().trim().regex(/^\+[1-9]\d{7,14}$/, "Phone number must use international format, e.g. +6282218458888"),
@@ -52,15 +54,6 @@ interface DepartmentOption {
     name: string;
 }
 
-interface DistrictSuggestion {
-    id: string;
-    districtName: string;
-    regencyId: string | null;
-    regencyName: string | null;
-    provinceId: string | null;
-    provinceName: string | null;
-}
-
 const emptyEducationRecord = { level: "", schoolName: "", graduationYear: new Date().getFullYear() };
 
 export default function CreateEmployeePage() {
@@ -68,7 +61,12 @@ export default function CreateEmployeePage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [departments, setDepartments] = useState<DepartmentOption[]>([]);
-    const [districtSuggestions, setDistrictSuggestions] = useState<DistrictSuggestion[]>([]);
+    const [provinces, setProvinces] = useState<DepartmentOption[]>([]);
+    const [regencies, setRegencies] = useState<DepartmentOption[]>([]);
+    const [districts, setDistricts] = useState<DepartmentOption[]>([]);
+    const [provinceSearch, setProvinceSearch] = useState("");
+    const [regencySearch, setRegencySearch] = useState("");
+    const [districtSearch, setDistrictSearch] = useState("");
     const [photoPreview, setPhotoPreview] = useState<string | null>(null);
     const [photoFile, setPhotoFile] = useState<File | null>(null);
 
@@ -80,9 +78,12 @@ export default function CreateEmployeePage() {
             email: "",
             phoneNumber: "",
             placeOfBirth: "",
-            districtName: "",
-            regencyName: "",
+            provinceId: "",
             provinceName: "",
+            regencyId: "",
+            regencyName: "",
+            districtId: "",
+            districtName: "",
             fullAddress: "",
             homeToOfficeDistance: 0,
             dateOfBirth: "",
@@ -104,6 +105,12 @@ export default function CreateEmployeePage() {
     });
 
     const dateOfBirth = useWatch({ control, name: "dateOfBirth" });
+    const provinceId = useWatch({ control, name: "provinceId" });
+    const regencyId = useWatch({ control, name: "regencyId" });
+    const districtId = useWatch({ control, name: "districtId" });
+    const activeProvinceId = provinceId ?? "";
+    const activeRegencyId = regencyId ?? "";
+    const activeDistrictId = districtId ?? "";
 
     useEffect(() => {
         if (!dateOfBirth) {
@@ -138,40 +145,50 @@ export default function CreateEmployeePage() {
             }
         };
 
+        const fetchProvinces = async () => {
+            try {
+                const result = await getProvinceOptions();
+                setProvinces(result);
+            } catch {
+                setError("Failed to load provinces.");
+            }
+        };
+
         void fetchDepartments();
+        void fetchProvinces();
     }, []);
 
-    const districtName = useWatch({ control, name: "districtName" });
+    useEffect(() => {
+        if (!activeProvinceId) {
+            return;
+        }
+
+        void (async () => {
+            try {
+                const result = await getRegencyOptions(activeProvinceId);
+                setRegencies(result);
+            } catch {
+                setRegencies([]);
+            }
+        })();
+    }, [activeProvinceId]);
 
     useEffect(() => {
-        const trimmed = districtName?.trim() ?? "";
+        if (!activeRegencyId) {
+            return;
+        }
 
-        const timeoutId = window.setTimeout(() => {
-            if (trimmed.length < 3) {
-                setDistrictSuggestions([]);
-                return;
+        void (async () => {
+            try {
+                const result = await getDistrictOptions(activeRegencyId);
+                setDistricts(result);
+            } catch {
+                setDistricts([]);
             }
-
-            void (async () => {
-                try {
-                    const result = await searchDistricts(trimmed, 8);
-                    setDistrictSuggestions(result.map((item) => ({
-                        ...item,
-                        regencyName: item.regencyName ?? "",
-                        provinceName: item.provinceName ?? "",
-                    })));
-                } catch {
-                    setDistrictSuggestions([]);
-                }
-            })();
-        }, 250);
-
-        return () => window.clearTimeout(timeoutId);
-    }, [districtName]);
+        })();
+    }, [activeRegencyId]);
 
     const ageValue = Number(useWatch({ control, name: "age" }) ?? 0);
-    const regencyName = useWatch({ control, name: "regencyName" });
-    const provinceName = useWatch({ control, name: "provinceName" });
 
     const onSubmit = async (data: z.output<typeof employeeSchema>) => {
         setLoading(true);
@@ -236,18 +253,12 @@ export default function CreateEmployeePage() {
         setError(null);
     };
 
-    const selectDistrict = (suggestion: DistrictSuggestion) => {
-        const nextRegencyName = suggestion.regencyName ?? "";
-        const nextProvinceName = suggestion.provinceName ?? "";
-
-        setValue("districtId", suggestion.id, { shouldDirty: true, shouldValidate: true });
-        setValue("districtName", suggestion.districtName, { shouldDirty: true, shouldValidate: true });
-        setValue("regencyId", suggestion.regencyId ?? "", { shouldDirty: true, shouldValidate: true });
-        setValue("regencyName", nextRegencyName, { shouldDirty: true, shouldValidate: true });
-        setValue("provinceId", suggestion.provinceId ?? "", { shouldDirty: true, shouldValidate: true });
-        setValue("provinceName", nextProvinceName, { shouldDirty: true, shouldValidate: true });
-        setDistrictSuggestions([]);
-    };
+    const filteredProvinces = provinces.filter((item) => item.name.toLowerCase().includes(provinceSearch.toLowerCase()));
+    const filteredRegencies = regencies.filter((item) => item.name.toLowerCase().includes(regencySearch.toLowerCase()));
+    const filteredDistricts = districts.filter((item) => item.name.toLowerCase().includes(districtSearch.toLowerCase()));
+    const selectedProvince = provinces.find((item) => item.id === activeProvinceId);
+    const selectedRegency = regencies.find((item) => item.id === activeRegencyId);
+    const selectedDistrict = districts.find((item) => item.id === activeDistrictId);
 
     return (
         <div className="flex flex-col gap-6">
@@ -285,7 +296,17 @@ export default function CreateEmployeePage() {
                                 <Field>
                                     <FieldLabel htmlFor="nip">NIP</FieldLabel>
                                     <FieldContent>
-                                        <Input id="nip" placeholder="e.g. 2024060101" {...register("nip")} aria-invalid={!!errors.nip} />
+                                        <Input
+                                            id="nip"
+                                            placeholder="e.g. 2024060101"
+                                            inputMode="numeric"
+                                            {...register("nip")}
+                                            onInput={(event) => {
+                                                const target = event.currentTarget;
+                                                target.value = target.value.replace(/\D/g, "");
+                                            }}
+                                            aria-invalid={!!errors.nip}
+                                        />
                                     </FieldContent>
                                     <FieldError errors={errors.nip ? [errors.nip] : []} />
                                 </Field>
@@ -323,41 +344,149 @@ export default function CreateEmployeePage() {
                                 </Field>
 
                                 <Field>
-                                    <FieldLabel htmlFor="districtName">District</FieldLabel>
+                                    <FieldLabel htmlFor="provinceId">Province</FieldLabel>
                                     <FieldContent>
-                                        <div className="relative">
-                                            <Input id="districtName" placeholder="Type at least 3 characters" {...register("districtName")} aria-invalid={!!errors.districtName} />
-                                            {districtSuggestions.length > 0 && (
-                                                <div className="absolute z-10 mt-1 w-full rounded-md border border-input bg-popover shadow-md">
-                                                    {districtSuggestions.map((suggestion) => (
-                                                        <button
-                                                            key={suggestion.id}
-                                                            type="button"
-                                                            className="block w-full px-3 py-2 text-left text-sm hover:bg-muted"
-                                                            onClick={() => selectDistrict(suggestion)}
-                                                        >
-                                                            {suggestion.districtName} · {suggestion.regencyName} · {suggestion.provinceName}
-                                                        </button>
-                                                    ))}
-                                                </div>
+                                        <Controller
+                                            name="provinceId"
+                                            control={control}
+                                            render={({ field }) => (
+                                                <Select
+                                                    value={field.value || ""}
+                                                    onValueChange={(value) => {
+                                                        const nextValue = value ?? "";
+                                                        field.onChange(nextValue);
+                                                        const selected = provinces.find((item) => item.id === nextValue);
+                                                        setRegencies([]);
+                                                        setDistricts([]);
+                                                        setProvinceSearch("");
+                                                        setRegencySearch("");
+                                                        setDistrictSearch("");
+                                                        setValue("provinceName", selected?.name ?? "", { shouldDirty: true, shouldValidate: true });
+                                                        setValue("regencyId", "", { shouldDirty: true, shouldValidate: true });
+                                                        setValue("regencyName", "", { shouldDirty: true, shouldValidate: true });
+                                                        setValue("districtId", "", { shouldDirty: true, shouldValidate: true });
+                                                        setValue("districtName", "", { shouldDirty: true, shouldValidate: true });
+                                                    }}
+                                                    disabled={provinces.length === 0}
+                                                >
+                                                    <SelectTrigger id="provinceId" className="w-full" aria-invalid={!!errors.provinceId}>
+                                                        <SelectValue>{selectedProvince?.name ?? "Select province"}</SelectValue>
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <div className="border-b border-input p-2">
+                                                            <Input
+                                                                placeholder="Search province"
+                                                                value={provinceSearch}
+                                                                onChange={(event) => setProvinceSearch(event.target.value)}
+                                                                onPointerDown={(event) => event.stopPropagation()}
+                                                                onKeyDown={(event) => event.stopPropagation()}
+                                                                autoFocus
+                                                            />
+                                                        </div>
+                                                        {filteredProvinces.length > 0 ? filteredProvinces.map((item) => (
+                                                            <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>
+                                                        )) : (
+                                                            <div className="px-3 py-2 text-sm text-muted-foreground">No provinces found</div>
+                                                        )}
+                                                    </SelectContent>
+                                                </Select>
                                             )}
-                                        </div>
+                                        />
                                     </FieldContent>
-                                    <FieldError errors={errors.districtName ? [errors.districtName] : []} />
+                                    <FieldError errors={errors.provinceId ? [errors.provinceId] : []} />
                                 </Field>
 
                                 <Field>
-                                    <FieldLabel htmlFor="regencyName">Regency</FieldLabel>
+                                    <FieldLabel htmlFor="regencyId">Regency</FieldLabel>
                                     <FieldContent>
-                                        <Input id="regencyName" readOnly value={regencyName || ""} className="bg-muted" />
+                                        <Controller
+                                            name="regencyId"
+                                            control={control}
+                                            render={({ field }) => (
+                                                <Select
+                                                    value={field.value || ""}
+                                                    onValueChange={(value) => {
+                                                        const nextValue = value ?? "";
+                                                        field.onChange(nextValue);
+                                                        const selected = regencies.find((item) => item.id === nextValue);
+                                                        setDistricts([]);
+                                                        setRegencySearch("");
+                                                        setDistrictSearch("");
+                                                        setValue("regencyName", selected?.name ?? "", { shouldDirty: true, shouldValidate: true });
+                                                        setValue("districtId", "", { shouldDirty: true, shouldValidate: true });
+                                                        setValue("districtName", "", { shouldDirty: true, shouldValidate: true });
+                                                    }}
+                                                    disabled={!activeProvinceId || regencies.length === 0}
+                                                >
+                                                    <SelectTrigger id="regencyId" className="w-full" aria-invalid={!!errors.regencyId}>
+                                                        <SelectValue>{selectedRegency?.name ?? (activeProvinceId ? "Select regency" : "Select province first")}</SelectValue>
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <div className="border-b border-input p-2">
+                                                            <Input
+                                                                placeholder="Search regency"
+                                                                value={regencySearch}
+                                                                onChange={(event) => setRegencySearch(event.target.value)}
+                                                                onPointerDown={(event) => event.stopPropagation()}
+                                                                onKeyDown={(event) => event.stopPropagation()}
+                                                                autoFocus
+                                                            />
+                                                        </div>
+                                                        {filteredRegencies.length > 0 ? filteredRegencies.map((item) => (
+                                                            <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>
+                                                        )) : (
+                                                            <div className="px-3 py-2 text-sm text-muted-foreground">No regencies found</div>
+                                                        )}
+                                                    </SelectContent>
+                                                </Select>
+                                            )}
+                                        />
                                     </FieldContent>
+                                    <FieldError errors={errors.regencyId ? [errors.regencyId] : []} />
                                 </Field>
 
                                 <Field>
-                                    <FieldLabel htmlFor="provinceName">Province</FieldLabel>
+                                    <FieldLabel htmlFor="districtId">District</FieldLabel>
                                     <FieldContent>
-                                        <Input id="provinceName" readOnly value={provinceName || ""} className="bg-muted" />
+                                        <Controller
+                                            name="districtId"
+                                            control={control}
+                                            render={({ field }) => (
+                                                <Select
+                                                    value={field.value || ""}
+                                                    onValueChange={(value) => {
+                                                        const nextValue = value ?? "";
+                                                        field.onChange(nextValue);
+                                                        const selected = districts.find((item) => item.id === nextValue);
+                                                        setValue("districtName", selected?.name ?? "", { shouldDirty: true, shouldValidate: true });
+                                                    }}
+                                                    disabled={!activeRegencyId || districts.length === 0}
+                                                >
+                                                    <SelectTrigger id="districtId" className="w-full" aria-invalid={!!errors.districtId}>
+                                                        <SelectValue>{selectedDistrict?.name ?? (activeRegencyId ? "Select district" : "Select regency first")}</SelectValue>
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <div className="border-b border-input p-2">
+                                                            <Input
+                                                                placeholder="Search district"
+                                                                value={districtSearch}
+                                                                onChange={(event) => setDistrictSearch(event.target.value)}
+                                                                onPointerDown={(event) => event.stopPropagation()}
+                                                                onKeyDown={(event) => event.stopPropagation()}
+                                                                autoFocus
+                                                            />
+                                                        </div>
+                                                        {filteredDistricts.length > 0 ? filteredDistricts.map((item) => (
+                                                            <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>
+                                                        )) : (
+                                                            <div className="px-3 py-2 text-sm text-muted-foreground">No districts found</div>
+                                                        )}
+                                                    </SelectContent>
+                                                </Select>
+                                            )}
+                                        />
                                     </FieldContent>
+                                    <FieldError errors={errors.districtId ? [errors.districtId] : []} />
                                 </Field>
 
                                 <Field className="md:col-span-2">
@@ -533,7 +662,7 @@ export default function CreateEmployeePage() {
                                             <FieldError errors={errors.education?.[index]?.graduationYear ? [errors.education[index].graduationYear] : []} />
                                         </div>
                                         <div className="flex items-end">
-                                            <Button type="button" variant="destructive" onClick={() => remove(index)} disabled={fields.length === 1}>Remove</Button>
+                                            <Button size="icon-lg" type="button" variant="destructive" onClick={() => remove(index)} disabled={fields.length === 1}><IconTrash /></Button>
                                         </div>
                                     </div>
                                 ))}

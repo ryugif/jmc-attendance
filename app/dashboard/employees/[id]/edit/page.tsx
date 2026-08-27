@@ -10,8 +10,10 @@ import { useParams, useRouter } from "next/navigation";
 import GlobalHeader from "@/components/global-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { Field, FieldContent, FieldError, FieldLabel, FieldSet } from "@/components/ui/field";
-import { getDepartmentOptions, getEmployeeDetail, searchDistricts, updateEmployee } from "@/app/dashboard/employees/actions";
+import { getDepartmentOptions, getDistrictOptions, getEmployeeDetail, getProvinceOptions, getRegencyOptions, updateEmployee } from "@/app/dashboard/employees/actions";
 
 const educationSchema = z.object({
     level: z.string().min(1, "Education level is required"),
@@ -20,7 +22,7 @@ const educationSchema = z.object({
 });
 
 const employeeSchema = z.object({
-    nip: z.string().trim().min(8, "NIP must be at least 8 numeric characters").regex(/^\d+$/, "NIP must contain only numeric characters"),
+    nip: z.string().min(8, "NIP must be at least 8 numeric characters").regex(/^\d+$/, "NIP must contain only numeric characters without spaces"),
     name: z.string().trim().min(1, "Employee name is required").regex(/^[A-Za-z0-9' ]+$/, "Name may only contain letters, numbers, apostrophes, and spaces"),
     email: z.string().trim().email("Please enter a valid email"),
     phoneNumber: z.string().trim().regex(/^\+[1-9]\d{7,14}$/, "Phone number must use international format, e.g. +6282218458888"),
@@ -45,8 +47,10 @@ const employeeSchema = z.object({
     education: z.array(educationSchema).min(1, "At least one education record is required"),
 });
 
-interface DepartmentOption { id: string; name: string; }
-interface DistrictSuggestion { id: string; districtName: string; regencyId: string | null; regencyName: string | null; provinceId: string | null; provinceName: string | null; }
+interface DepartmentOption {
+    id: string;
+    name: string;
+}
 
 const baseEducation = { level: "", schoolName: "", graduationYear: new Date().getFullYear() };
 
@@ -71,7 +75,12 @@ export default function EditEmployeePage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [departments, setDepartments] = useState<DepartmentOption[]>([]);
-    const [districtSuggestions, setDistrictSuggestions] = useState<DistrictSuggestion[]>([]);
+    const [provinces, setProvinces] = useState<DepartmentOption[]>([]);
+    const [regencies, setRegencies] = useState<DepartmentOption[]>([]);
+    const [districts, setDistricts] = useState<DepartmentOption[]>([]);
+    const [provinceSearch, setProvinceSearch] = useState("");
+    const [regencySearch, setRegencySearch] = useState("");
+    const [districtSearch, setDistrictSearch] = useState("");
     const [photoPreview, setPhotoPreview] = useState<string | null>(null);
     const [photoFile, setPhotoFile] = useState<File | null>(null);
 
@@ -83,8 +92,11 @@ export default function EditEmployeePage() {
             email: "",
             phoneNumber: "",
             placeOfBirth: "",
+            districtId: "",
             districtName: "",
+            regencyId: "",
             regencyName: "",
+            provinceId: "",
             provinceName: "",
             fullAddress: "",
             homeToOfficeDistance: 0,
@@ -103,16 +115,25 @@ export default function EditEmployeePage() {
 
     const { fields, append, remove } = useFieldArray({ control, name: "education" });
     const dateOfBirth = useWatch({ control, name: "dateOfBirth" });
+    const provinceId = useWatch({ control, name: "provinceId" });
+    const regencyId = useWatch({ control, name: "regencyId" });
+    const districtId = useWatch({ control, name: "districtId" });
+    const activeProvinceId = provinceId ?? "";
+    const activeRegencyId = regencyId ?? "";
+    const activeDistrictId = districtId ?? "";
 
     useEffect(() => {
         const fetchPage = async () => {
             try {
-                const [departmentResult, detailResult] = await Promise.all([
+                const [departmentResult, provinceResult, detailResult] = await Promise.all([
                     getDepartmentOptions(),
+                    getProvinceOptions(),
                     getEmployeeDetail(employeeId),
                 ]);
 
                 setDepartments(departmentResult);
+                setProvinces(provinceResult);
+
                 const employee = detailResult.data as unknown as {
                     photoUrl?: string | null;
                     nip?: string;
@@ -137,12 +158,9 @@ export default function EditEmployeePage() {
                     departmentId?: string;
                     contractStatus?: "Permanent" | "Contract" | "Internship" | "Probation";
                     status?: "Active" | "Inactive";
-                    education?: Array<{
-                        level: string;
-                        schoolName: string;
-                        graduationYear: number;
-                    }>;
+                    education?: Array<{ level: string; schoolName: string; graduationYear: number }>;
                 };
+
                 setPhotoPreview(employee.photoUrl ?? null);
                 setValue("nip", employee.nip ?? "");
                 setValue("name", employee.name ?? "");
@@ -166,11 +184,23 @@ export default function EditEmployeePage() {
                 setValue("departmentId", employee.departmentId ?? "");
                 setValue("contractStatus", employee.contractStatus ?? "Permanent");
                 setValue("status", employee.status ?? "Active");
-                setValue("education", Array.isArray(employee.education) && employee.education.length ? employee.education.map((item) => ({
-                    level: item.level,
-                    schoolName: item.schoolName,
-                    graduationYear: Number(item.graduationYear),
-                })) : [{ ...baseEducation }]);
+                setValue("education", Array.isArray(employee.education) && employee.education.length
+                    ? employee.education.map((item) => ({
+                        level: item.level,
+                        schoolName: item.schoolName,
+                        graduationYear: Number(item.graduationYear),
+                    }))
+                    : [{ ...baseEducation }]);
+
+                if (employee.provinceId) {
+                    const provinceOptions = await getRegencyOptions(employee.provinceId);
+                    setRegencies(provinceOptions);
+                }
+
+                if (employee.regencyId) {
+                    const districtOptions = await getDistrictOptions(employee.regencyId);
+                    setDistricts(districtOptions);
+                }
             } catch (err) {
                 const message = err instanceof Error ? err.message : "Failed to load employee details.";
                 setError(message);
@@ -207,68 +237,74 @@ export default function EditEmployeePage() {
         setValue("age", Math.max(age, 0), { shouldDirty: true, shouldValidate: true });
     }, [dateOfBirth, setValue]);
 
-    const districtName = useWatch({ control, name: "districtName" });
+    useEffect(() => {
+        if (!activeProvinceId) {
+            return;
+        }
+
+        void (async () => {
+            try {
+                const result = await getRegencyOptions(activeProvinceId);
+                setRegencies(result);
+            } catch {
+                setRegencies([]);
+            }
+        })();
+    }, [activeProvinceId]);
 
     useEffect(() => {
-        const trimmed = districtName?.trim() ?? "";
+        if (!activeRegencyId) {
+            return;
+        }
 
-        const timeoutId = window.setTimeout(() => {
-            if (trimmed.length < 3) {
-                setDistrictSuggestions([]);
-                return;
+        void (async () => {
+            try {
+                const result = await getDistrictOptions(activeRegencyId);
+                setDistricts(result);
+            } catch {
+                setDistricts([]);
             }
-
-            void (async () => {
-                try {
-                    const result = await searchDistricts(trimmed, 8);
-                    setDistrictSuggestions(result.map((item) => ({
-                        ...item,
-                        regencyName: item.regencyName ?? "",
-                        provinceName: item.provinceName ?? "",
-                    })));
-                } catch {
-                    setDistrictSuggestions([]);
-                }
-            })();
-        }, 250);
-
-        return () => window.clearTimeout(timeoutId);
-    }, [districtName]);
+        })();
+    }, [activeRegencyId]);
 
     const ageValue = Number(useWatch({ control, name: "age" }) ?? 0);
-    const regencyName = useWatch({ control, name: "regencyName" });
-    const provinceName = useWatch({ control, name: "provinceName" });
+    const filteredProvinces = provinces.filter((item) => item.name.toLowerCase().includes(provinceSearch.toLowerCase()));
+    const filteredRegencies = regencies.filter((item) => item.name.toLowerCase().includes(regencySearch.toLowerCase()));
+    const filteredDistricts = districts.filter((item) => item.name.toLowerCase().includes(districtSearch.toLowerCase()));
+    const selectedProvince = provinces.find((item) => item.id === activeProvinceId);
+    const selectedRegency = regencies.find((item) => item.id === activeRegencyId);
+    const selectedDistrict = districts.find((item) => item.id === activeDistrictId);
 
-    const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (!file) {
-            return;
-        }
-
-        if (!["image/png", "image/jpeg", "image/jpg"].includes(file.type)) {
-            setError("Photo must be PNG, JPG, or JPEG.");
-            return;
-        }
-
-        const reader = new FileReader();
-        reader.onload = () => {
-            setPhotoPreview(typeof reader.result === "string" ? reader.result : null);
-        };
-        reader.readAsDataURL(file);
-        setPhotoFile(file);
+    const selectDistrict = (nextDistrictId: string) => {
+        const selectedDistrict = districts.find((item) => item.id === nextDistrictId);
+        setValue("districtId", nextDistrictId, { shouldDirty: true, shouldValidate: true });
+        setValue("districtName", selectedDistrict?.name ?? "", { shouldDirty: true, shouldValidate: true });
     };
 
-    const selectDistrict = (suggestion: DistrictSuggestion) => {
-        const nextRegencyName = suggestion.regencyName ?? "";
-        const nextProvinceName = suggestion.provinceName ?? "";
+    const selectRegency = (nextRegencyId: string) => {
+        const selectedRegency = regencies.find((item) => item.id === nextRegencyId);
+        setValue("regencyId", nextRegencyId, { shouldDirty: true, shouldValidate: true });
+        setValue("regencyName", selectedRegency?.name ?? "", { shouldDirty: true, shouldValidate: true });
+        setValue("districtId", "", { shouldDirty: true, shouldValidate: true });
+        setValue("districtName", "", { shouldDirty: true, shouldValidate: true });
+        setRegencySearch("");
+        setDistrictSearch("");
+        setDistricts([]);
+    };
 
-        setValue("districtId", suggestion.id, { shouldDirty: true, shouldValidate: true });
-        setValue("districtName", suggestion.districtName, { shouldDirty: true, shouldValidate: true });
-        setValue("regencyId", suggestion.regencyId ?? "", { shouldDirty: true, shouldValidate: true });
-        setValue("regencyName", nextRegencyName, { shouldDirty: true, shouldValidate: true });
-        setValue("provinceId", suggestion.provinceId ?? "", { shouldDirty: true, shouldValidate: true });
-        setValue("provinceName", nextProvinceName, { shouldDirty: true, shouldValidate: true });
-        setDistrictSuggestions([]);
+    const selectProvince = (nextProvinceId: string) => {
+        const selectedProvince = provinces.find((item) => item.id === nextProvinceId);
+        setValue("provinceId", nextProvinceId, { shouldDirty: true, shouldValidate: true });
+        setValue("provinceName", selectedProvince?.name ?? "", { shouldDirty: true, shouldValidate: true });
+        setValue("regencyId", "", { shouldDirty: true, shouldValidate: true });
+        setValue("regencyName", "", { shouldDirty: true, shouldValidate: true });
+        setValue("districtId", "", { shouldDirty: true, shouldValidate: true });
+        setValue("districtName", "", { shouldDirty: true, shouldValidate: true });
+        setProvinceSearch("");
+        setRegencySearch("");
+        setDistrictSearch("");
+        setRegencies([]);
+        setDistricts([]);
     };
 
     const onSubmit = async (data: z.output<typeof employeeSchema>) => {
@@ -311,6 +347,25 @@ export default function EditEmployeePage() {
         }
     };
 
+    const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) {
+            return;
+        }
+
+        if (!["image/png", "image/jpeg", "image/jpg"].includes(file.type)) {
+            setError("Photo must be PNG, JPG, or JPEG.");
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = () => {
+            setPhotoPreview(typeof reader.result === "string" ? reader.result : null);
+        };
+        reader.readAsDataURL(file);
+        setPhotoFile(file);
+    };
+
     if (pageLoading) {
         return <div className="rounded-lg border border-input bg-card p-6 text-center">Loading employee information...</div>;
     }
@@ -348,7 +403,16 @@ export default function EditEmployeePage() {
                             <Field>
                                 <FieldLabel htmlFor="nip">NIP</FieldLabel>
                                 <FieldContent>
-                                    <Input id="nip" {...register("nip")} aria-invalid={!!errors.nip} />
+                                    <Input
+                                        id="nip"
+                                        inputMode="numeric"
+                                        {...register("nip")}
+                                        onInput={(event) => {
+                                            const target = event.currentTarget;
+                                            target.value = target.value.replace(/\D/g, "");
+                                        }}
+                                        aria-invalid={!!errors.nip}
+                                    />
                                 </FieldContent>
                                 <FieldError errors={errors.nip ? [errors.nip] : []} />
                             </Field>
@@ -386,47 +450,138 @@ export default function EditEmployeePage() {
                             </Field>
 
                             <Field>
-                                <FieldLabel htmlFor="districtName">District</FieldLabel>
+                                <FieldLabel htmlFor="provinceId">Province</FieldLabel>
                                 <FieldContent>
-                                    <div className="relative">
-                                        <Input id="districtName" {...register("districtName")} aria-invalid={!!errors.districtName} />
-                                        {districtSuggestions.length > 0 && (
-                                            <div className="absolute z-10 mt-1 w-full rounded-md border border-input bg-popover shadow-md">
-                                                {districtSuggestions.map((suggestion) => (
-                                                    <button
-                                                        key={suggestion.id}
-                                                        type="button"
-                                                        className="block w-full px-3 py-2 text-left text-sm hover:bg-muted"
-                                                        onClick={() => selectDistrict(suggestion)}
-                                                    >
-                                                        {suggestion.districtName} · {suggestion.regencyName} · {suggestion.provinceName}
-                                                    </button>
-                                                ))}
-                                            </div>
+                                    <Controller
+                                        name="provinceId"
+                                        control={control}
+                                        render={({ field }) => (
+                                            <Select
+                                                value={field.value || ""}
+                                                onValueChange={(value) => {
+                                                    const nextValue = value ?? "";
+                                                    field.onChange(nextValue);
+                                                    selectProvince(nextValue);
+                                                }}
+                                                disabled={provinces.length === 0}
+                                            >
+                                                <SelectTrigger id="provinceId" className="w-full" aria-invalid={!!errors.provinceId}>
+                                                    <SelectValue>{selectedProvince?.name ?? "Select province"}</SelectValue>
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <div className="border-b border-input p-2">
+                                                        <Input
+                                                            placeholder="Search province"
+                                                            value={provinceSearch}
+                                                            onChange={(event) => setProvinceSearch(event.target.value)}
+                                                            onPointerDown={(event) => event.stopPropagation()}
+                                                            onKeyDown={(event) => event.stopPropagation()}
+                                                            autoFocus
+                                                        />
+                                                    </div>
+                                                    {filteredProvinces.length > 0 ? filteredProvinces.map((item) => (
+                                                        <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>
+                                                    )) : (
+                                                        <div className="px-3 py-2 text-sm text-muted-foreground">No provinces found</div>
+                                                    )}
+                                                </SelectContent>
+                                            </Select>
                                         )}
-                                    </div>
+                                    />
                                 </FieldContent>
-                                <FieldError errors={errors.districtName ? [errors.districtName] : []} />
+                                <FieldError errors={errors.provinceId ? [errors.provinceId] : []} />
                             </Field>
 
                             <Field>
-                                <FieldLabel htmlFor="regencyName">Regency</FieldLabel>
+                                <FieldLabel htmlFor="regencyId">Regency</FieldLabel>
                                 <FieldContent>
-                                    <Input id="regencyName" readOnly value={regencyName || ""} className="bg-muted" />
+                                    <Controller
+                                        name="regencyId"
+                                        control={control}
+                                        render={({ field }) => (
+                                            <Select
+                                                value={field.value || ""}
+                                                onValueChange={(value) => {
+                                                    const nextValue = value ?? "";
+                                                    field.onChange(nextValue);
+                                                    selectRegency(nextValue);
+                                                }}
+                                                disabled={!activeProvinceId || regencies.length === 0}
+                                            >
+                                                <SelectTrigger id="regencyId" className="w-full" aria-invalid={!!errors.regencyId}>
+                                                    <SelectValue>{selectedRegency?.name ?? (activeProvinceId ? "Select regency" : "Select province first")}</SelectValue>
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <div className="border-b border-input p-2">
+                                                        <Input
+                                                            placeholder="Search regency"
+                                                            value={regencySearch}
+                                                            onChange={(event) => setRegencySearch(event.target.value)}
+                                                            onPointerDown={(event) => event.stopPropagation()}
+                                                            onKeyDown={(event) => event.stopPropagation()}
+                                                            autoFocus
+                                                        />
+                                                    </div>
+                                                    {filteredRegencies.length > 0 ? filteredRegencies.map((item) => (
+                                                        <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>
+                                                    )) : (
+                                                        <div className="px-3 py-2 text-sm text-muted-foreground">No regencies found</div>
+                                                    )}
+                                                </SelectContent>
+                                            </Select>
+                                        )}
+                                    />
                                 </FieldContent>
+                                <FieldError errors={errors.regencyId ? [errors.regencyId] : []} />
                             </Field>
 
                             <Field>
-                                <FieldLabel htmlFor="provinceName">Province</FieldLabel>
+                                <FieldLabel htmlFor="districtId">District</FieldLabel>
                                 <FieldContent>
-                                    <Input id="provinceName" readOnly value={provinceName || ""} className="bg-muted" />
+                                    <Controller
+                                        name="districtId"
+                                        control={control}
+                                        render={({ field }) => (
+                                            <Select
+                                                value={field.value || ""}
+                                                onValueChange={(value) => {
+                                                    const nextValue = value ?? "";
+                                                    field.onChange(nextValue);
+                                                    selectDistrict(nextValue);
+                                                }}
+                                                disabled={!activeRegencyId || districts.length === 0}
+                                            >
+                                                <SelectTrigger id="districtId" className="w-full" aria-invalid={!!errors.districtId}>
+                                                    <SelectValue>{selectedDistrict?.name ?? (activeRegencyId ? "Select district" : "Select regency first")}</SelectValue>
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <div className="border-b border-input p-2">
+                                                        <Input
+                                                            placeholder="Search district"
+                                                            value={districtSearch}
+                                                            onChange={(event) => setDistrictSearch(event.target.value)}
+                                                            onPointerDown={(event) => event.stopPropagation()}
+                                                            onKeyDown={(event) => event.stopPropagation()}
+                                                            autoFocus
+                                                        />
+                                                    </div>
+                                                    {filteredDistricts.length > 0 ? filteredDistricts.map((item) => (
+                                                        <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>
+                                                    )) : (
+                                                        <div className="px-3 py-2 text-sm text-muted-foreground">No districts found</div>
+                                                    )}
+                                                </SelectContent>
+                                            </Select>
+                                        )}
+                                    />
                                 </FieldContent>
+                                <FieldError errors={errors.districtId ? [errors.districtId] : []} />
                             </Field>
 
                             <Field className="md:col-span-2">
                                 <FieldLabel htmlFor="fullAddress">Full Address</FieldLabel>
                                 <FieldContent>
-                                    <textarea id="fullAddress" rows={4} className="rounded-md border border-input bg-background px-3 py-2 text-sm" {...register("fullAddress")} aria-invalid={!!errors.fullAddress} />
+                                    <Textarea id="fullAddress" rows={4} {...register("fullAddress")} aria-invalid={!!errors.fullAddress} placeholder="Enter employee address" />
                                 </FieldContent>
                                 <FieldError errors={errors.fullAddress ? [errors.fullAddress] : []} />
                             </Field>

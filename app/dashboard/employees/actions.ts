@@ -27,6 +27,51 @@ export async function getDepartmentOptions() {
         .orderBy(desc(department.name));
 }
 
+export async function getProvinceOptions(search = "") {
+    const normalized = search.trim();
+    const clauses = [] as ReturnType<typeof or>[];
+
+    if (normalized) {
+        clauses.push(like(province.name, `%${normalized}%`));
+    }
+
+    return await db
+        .select({ id: province.id, name: province.name })
+        .from(province)
+        .where(clauses.length > 0 ? or(...clauses) : undefined)
+        .orderBy(desc(province.name));
+}
+
+export async function getRegencyOptions(provinceId: string, search = "") {
+    const normalized = search.trim();
+    const clauses = [eq(regency.provinceId, provinceId)] as ReturnType<typeof and>[];
+
+    if (normalized) {
+        clauses.push(like(regency.name, `%${normalized}%`));
+    }
+
+    return await db
+        .select({ id: regency.id, name: regency.name })
+        .from(regency)
+        .where(and(...clauses))
+        .orderBy(desc(regency.name));
+}
+
+export async function getDistrictOptions(regencyId: string, search = "") {
+    const normalized = search.trim();
+    const clauses = [eq(district.regencyId, regencyId)] as ReturnType<typeof and>[];
+
+    if (normalized) {
+        clauses.push(like(district.name, `%${normalized}%`));
+    }
+
+    return await db
+        .select({ id: district.id, name: district.name })
+        .from(district)
+        .where(and(...clauses))
+        .orderBy(desc(district.name));
+}
+
 export async function searchDistricts(query: string, limit = 10) {
     const normalized = query.trim();
 
@@ -125,7 +170,7 @@ export async function createEmployee(data: {
     status: EmployeeStatus;
     education: EmployeeEducationInput[];
 }) {
-    const nip = data.nip.trim();
+    const nip = data.nip;
     const name = data.name.trim();
     const email = data.email.trim().toLowerCase();
     const phoneNumber = data.phoneNumber.trim();
@@ -137,7 +182,7 @@ export async function createEmployee(data: {
     const normalizedEducation = normalizeEmployeeEducation(data.education);
 
     if (!nip || !/^\d{8,}$/.test(nip)) {
-        throw new Error("NIP is required and must contain at least 8 numeric characters.");
+        throw new Error("NIP is required, must contain at least 8 numeric characters, and cannot contain spaces.");
     }
 
     if (!name || !/^[A-Za-z0-9' ]+$/.test(name)) {
@@ -284,7 +329,7 @@ export async function updateEmployee(
         throw new Error("Employee not found.");
     }
 
-    const nextNip = (data.nip ?? existing.nip).trim();
+    const nextNip = data.nip ?? existing.nip;
     const nextName = (data.name ?? existing.name).trim();
     const nextEmail = (data.email ?? existing.email).trim().toLowerCase();
     const nextPhone = (data.phoneNumber ?? existing.phoneNumber).trim();
@@ -300,7 +345,7 @@ export async function updateEmployee(
     const nextJoinDateValue = toDbDate(nextJoinDate);
 
     if (!nextNip || !/^\d{8,}$/.test(nextNip)) {
-        throw new Error("NIP is required and must contain at least 8 numeric characters.");
+        throw new Error("NIP is required, must contain at least 8 numeric characters, and cannot contain spaces.");
     }
 
     if (!nextName || !/^[A-Za-z0-9' ]+$/.test(nextName)) {
