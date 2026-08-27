@@ -65,9 +65,6 @@ export default function CreateEmployeePage() {
     const [provinces, setProvinces] = useState<DepartmentOption[]>([]);
     const [regencies, setRegencies] = useState<DepartmentOption[]>([]);
     const [districts, setDistricts] = useState<DepartmentOption[]>([]);
-    const [provinceSearch, setProvinceSearch] = useState("");
-    const [regencySearch, setRegencySearch] = useState("");
-    const [districtSearch, setDistrictSearch] = useState("");
     const [photoPreview, setPhotoPreview] = useState<string | null>(null);
     const [photoFile, setPhotoFile] = useState<File | null>(null);
 
@@ -254,9 +251,6 @@ export default function CreateEmployeePage() {
         setError(null);
     };
 
-    const filteredProvinces = provinces.filter((item) => item.name.toLowerCase().includes(provinceSearch.toLowerCase()));
-    const filteredRegencies = regencies.filter((item) => item.name.toLowerCase().includes(regencySearch.toLowerCase()));
-    const filteredDistricts = districts.filter((item) => item.name.toLowerCase().includes(districtSearch.toLowerCase()));
     const selectedProvince = provinces.find((item) => item.id === activeProvinceId);
     const selectedRegency = regencies.find((item) => item.id === activeRegencyId);
     const selectedDistrict = districts.find((item) => item.id === activeDistrictId);
@@ -359,9 +353,6 @@ export default function CreateEmployeePage() {
                                                         const selected = provinces.find((item) => item.id === nextValue);
                                                         setRegencies([]);
                                                         setDistricts([]);
-                                                        setProvinceSearch("");
-                                                        setRegencySearch("");
-                                                        setDistrictSearch("");
                                                         setValue("provinceName", selected?.name ?? "", { shouldDirty: true, shouldValidate: true });
                                                         setValue("regencyId", "", { shouldDirty: true, shouldValidate: true });
                                                         setValue("regencyName", "", { shouldDirty: true, shouldValidate: true });
@@ -374,17 +365,7 @@ export default function CreateEmployeePage() {
                                                         <SelectValue>{selectedProvince?.name ?? "Select province"}</SelectValue>
                                                     </SelectTrigger>
                                                     <SelectContent>
-                                                        <div className="border-b border-input p-2">
-                                                            <Input
-                                                                placeholder="Search province"
-                                                                value={provinceSearch}
-                                                                onChange={(event) => setProvinceSearch(event.target.value)}
-                                                                onPointerDown={(event) => event.stopPropagation()}
-                                                                onKeyDown={(event) => event.stopPropagation()}
-                                                                autoFocus
-                                                            />
-                                                        </div>
-                                                        {filteredProvinces.length > 0 ? filteredProvinces.map((item) => (
+                                                        {provinces.length > 0 ? provinces.map((item) => (
                                                             <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>
                                                         )) : (
                                                             <div className="px-3 py-2 text-sm text-muted-foreground">No provinces found</div>
@@ -411,8 +392,6 @@ export default function CreateEmployeePage() {
                                                         field.onChange(nextValue);
                                                         const selected = regencies.find((item) => item.id === nextValue);
                                                         setDistricts([]);
-                                                        setRegencySearch("");
-                                                        setDistrictSearch("");
                                                         setValue("regencyName", selected?.name ?? "", { shouldDirty: true, shouldValidate: true });
                                                         setValue("districtId", "", { shouldDirty: true, shouldValidate: true });
                                                         setValue("districtName", "", { shouldDirty: true, shouldValidate: true });
@@ -423,17 +402,7 @@ export default function CreateEmployeePage() {
                                                         <SelectValue>{selectedRegency?.name ?? (activeProvinceId ? "Select regency" : "Select province first")}</SelectValue>
                                                     </SelectTrigger>
                                                     <SelectContent>
-                                                        <div className="border-b border-input p-2">
-                                                            <Input
-                                                                placeholder="Search regency"
-                                                                value={regencySearch}
-                                                                onChange={(event) => setRegencySearch(event.target.value)}
-                                                                onPointerDown={(event) => event.stopPropagation()}
-                                                                onKeyDown={(event) => event.stopPropagation()}
-                                                                autoFocus
-                                                            />
-                                                        </div>
-                                                        {filteredRegencies.length > 0 ? filteredRegencies.map((item) => (
+                                                        {regencies.length > 0 ? regencies.map((item) => (
                                                             <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>
                                                         )) : (
                                                             <div className="px-3 py-2 text-sm text-muted-foreground">No regencies found</div>
@@ -467,17 +436,7 @@ export default function CreateEmployeePage() {
                                                         <SelectValue>{selectedDistrict?.name ?? (activeRegencyId ? "Select district" : "Select regency first")}</SelectValue>
                                                     </SelectTrigger>
                                                     <SelectContent>
-                                                        <div className="border-b border-input p-2">
-                                                            <Input
-                                                                placeholder="Search district"
-                                                                value={districtSearch}
-                                                                onChange={(event) => setDistrictSearch(event.target.value)}
-                                                                onPointerDown={(event) => event.stopPropagation()}
-                                                                onKeyDown={(event) => event.stopPropagation()}
-                                                                autoFocus
-                                                            />
-                                                        </div>
-                                                        {filteredDistricts.length > 0 ? filteredDistricts.map((item) => (
+                                                        {districts.length > 0 ? districts.map((item) => (
                                                             <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>
                                                         )) : (
                                                             <div className="px-3 py-2 text-sm text-muted-foreground">No districts found</div>
