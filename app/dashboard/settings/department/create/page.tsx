@@ -18,8 +18,8 @@ import {
     FieldError,
     FieldSet,
 } from "@/components/ui/field"
-import { createDepartment } from "@/lib/master-data-actions"
-import { Checkbox } from "../../../../../components/ui/checkbox"
+import { create } from "@/app/dashboard/settings/department/actions"
+import { Checkbox } from "@/components/ui/checkbox"
 
 // Validation schema
 const departmentSchema = z.object({
@@ -55,7 +55,7 @@ export default function CreateDepartmentPage() {
         setIsLoading(true)
         setError(null)
         try {
-            await createDepartment({
+            await create({
                 name: data.name,
                 description: data.description,
             })

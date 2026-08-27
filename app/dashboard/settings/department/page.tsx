@@ -37,7 +37,7 @@ import {
 import { IconDotsCircleHorizontal, IconPlus, IconSearch, IconX, IconZoomExclamation } from "@tabler/icons-react"
 import GlobalHeader from "@/components/global-header"
 import Link from "next/link"
-import { getDepartments, searchDepartments, deleteDepartment } from "@/lib/master-data-actions"
+import { getList, search, deleteItem } from "@/app/dashboard/settings/department/actions"
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "../../../../components/ui/empty";
 
 interface Department {
@@ -96,9 +96,9 @@ export default function DepartmentSettingsPage() {
             let result;
 
             if (searching) {
-                result = await searchDepartments(query, page, pageSize);
+                result = await search(query, page, pageSize);
             } else {
-                result = await getDepartments(page, pageSize);
+                result = await getList(page, pageSize);
             }
 
             if (requestId !== requestIdRef.current) {
@@ -160,7 +160,7 @@ export default function DepartmentSettingsPage() {
 
         setIsDeleting(true);
         try {
-            await deleteDepartment(departmentToDelete.id);
+            await deleteItem(departmentToDelete.id);
             setDeleteDialogOpen(false);
             setDepartmentToDelete(null);
             // Refresh the list

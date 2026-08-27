@@ -8,7 +8,7 @@ import { db } from "@/lib/db";
 import { department } from "@/lib/schema";
 
 
-export async function createDepartment(data: {
+export async function create(data: {
     name: string;
     description?: string;
     isActive?: boolean;
@@ -31,7 +31,7 @@ export async function createDepartment(data: {
     }
 }
 
-export async function updateDepartment(id: string, data: {
+export async function update(id: string, data: {
     name?: string;
     description?: string;
     isActive?: boolean;
@@ -51,7 +51,7 @@ export async function updateDepartment(id: string, data: {
     }
 }
 
-export async function getDepartments(page: number = 1, pageSize: number = 10) {
+export async function getList(page: number = 1, pageSize: number = 10) {
     try {
         const offset = (page - 1) * pageSize;
 
@@ -79,7 +79,7 @@ export async function getDepartments(page: number = 1, pageSize: number = 10) {
     }
 }
 
-export async function searchDepartments(query: string, page: number = 1, pageSize: number = 10) {
+export async function search(query: string, page: number = 1, pageSize: number = 10) {
     try {
         const offset = (page - 1) * pageSize;
         const searchQuery = `%${query}%`;
@@ -120,7 +120,7 @@ export async function searchDepartments(query: string, page: number = 1, pageSiz
     }
 }
 
-export async function getDepartment(id: string) {
+export async function getDetail(id: string) {
     try {
         const result = await db.select().from(department).where(eq(department.id, id));
 
@@ -138,7 +138,7 @@ export async function getDepartment(id: string) {
     }
 }
 
-export async function deleteDepartment(id: string) {
+export async function deleteItem(id: string) {
     try {
         await db.delete(department).where(eq(department.id, id));
 

@@ -18,7 +18,7 @@ import {
     FieldError,
     FieldSet,
 } from "@/components/ui/field"
-import { getDepartment, updateDepartment } from "@/lib/master-data-actions"
+import { getDetail, update } from "@/app/dashboard/settings/department/actions"
 import { Checkbox } from "@/components/ui/checkbox"
 
 // Validation schema
@@ -73,7 +73,7 @@ export default function UpdateDepartmentPage() {
         const fetchDepartment = async () => {
             try {
                 setIsPageLoading(true)
-                const result = await getDepartment(departmentId)
+                const result = await getDetail(departmentId)
                 if (result.success) {
                     const dept = result.data as DepartmentData
                     setDepartment(dept)
@@ -100,7 +100,7 @@ export default function UpdateDepartmentPage() {
         setIsLoading(true)
         setError(null)
         try {
-            await updateDepartment(departmentId, {
+            await update(departmentId, {
                 name: data.name,
                 description: data.description,
                 isActive: data.isActive,
