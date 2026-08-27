@@ -4,7 +4,7 @@ import { and, eq } from "drizzle-orm";
 
 import { auth } from "../lib/auth";
 import { db } from "../lib/db";
-import { role, userRole } from "../lib/schema";
+import { authSchema, role, userRole } from "../lib/schema";
 
 async function getOrCreateSuperAdminRole() {
     const existing = await db
@@ -47,19 +47,21 @@ async function main() {
     const password = process.env.SUPER_ADMIN_PASSWORD ?? "SuperAdmin123!";
 
     try {
-        const user = await auth.api.createUser({
+        const user = await auth.api.signUpEmail({
             body: {
                 email,
                 name,
                 password,
-                role: "admin",
-                data: {
-                    username,
-                },
+                username,
             },
         });
 
         const superAdminRole = await getOrCreateSuperAdminRole();
+
+        await db
+            .update(authSchema.user)
+            .set({ roleId: superAdminRole.id })
+            .where(eq(authSchema.user.id, user.user.id));
 
         const existingAssignment = await db
             .select()
@@ -78,7 +80,6 @@ async function main() {
         console.log(JSON.stringify({
             email: user.user.email,
             username,
-            authRole: user.user.role ?? "admin",
             rbacRole: superAdminRole.name,
         }, null, 2));
     } catch (error) {

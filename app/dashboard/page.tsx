@@ -1,7 +1,9 @@
+
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/lib/auth";
+import { getUserRoleNameByUserId } from "@/lib/rbac";
 
 export default async function DashboardPage() {
     const headerStore = await headers();
@@ -13,15 +15,17 @@ export default async function DashboardPage() {
         redirect("/sign-in");
     }
 
+    const userRole = await getUserRoleNameByUserId(session.user.id);
+    const userName = session.user.name || "User Name";
+    const user = session.user;
+
     return (
-        <main className="flex min-h-screen items-center justify-center bg-slate-100 p-6">
-            <div className="w-full max-w-xl rounded-2xl border border-slate-200 bg-white p-8 shadow-lg">
-                <p className="text-sm font-medium uppercase tracking-[0.2em] text-violet-600">Dashboard</p>
-                <h1 className="mt-3 text-3xl font-bold text-slate-900">Welcome back</h1>
-                <p className="mt-2 text-slate-600">
-                    You are signed in as <span className="font-semibold text-slate-900">{session.user.name}</span>.
-                </p>
-            </div>
-        </main>
+        <div className="space-y-4">
+            <p>
+                Selamat Datang <span className="font-semibold text-zinc-900">{userName}</span> - {userRole}.
+            </p>
+
+            <pre>{JSON.stringify(user, null, 2)}</pre>
+        </div>
     );
 }

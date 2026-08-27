@@ -1,3 +1,8 @@
+import { and, eq } from "drizzle-orm";
+
+import { db } from "./db";
+import { role, rolePermission, userRole } from "./schema";
+
 export type ReadAccess = "all" | "own" | "no";
 export type UpdateAccess = "all" | "own" | "no";
 export type DeleteAccess = "all" | "own" | "no";
@@ -70,4 +75,40 @@ export const ROLE_DEFINITIONS: RoleDefinition[] = [
 
 export function getRoleByName(name: string): RoleDefinition | undefined {
     return ROLE_DEFINITIONS.find((role) => role.name === name);
+}
+
+export async function getUserRoleRecordByUserId(userId: string) {
+    const assigned = await db
+        .select({ roleId: userRole.roleId })
+        .from(userRole)
+        .where(eq(userRole.userId, userId))
+        .limit(1);
+
+    const roleId = assigned[0]?.roleId;
+    if (!roleId) {
+        return null;
+    }
+
+    const [record] = await db.select().from(role).where(eq(role.id, roleId)).limit(1);
+    return record ?? null;
+}
+
+export async function getUserRoleNameByUserId(userId: string): Promise<string> {
+    const record = await getUserRoleRecordByUserId(userId);
+    return record?.name ?? "User";
+}
+
+export async function getUserModulePermission(userId: string, moduleName: string) {
+    const roleRecord = await getUserRoleRecordByUserId(userId);
+    if (!roleRecord) {
+        return null;
+    }
+
+    const [permission] = await db
+        .select()
+        .from(rolePermission)
+        .where(and(eq(rolePermission.roleId, roleRecord.id), eq(rolePermission.moduleName, moduleName)))
+        .limit(1);
+
+    return permission ?? null;
 }

@@ -21,7 +21,7 @@ export const user = mysqlTable(
         image: text("image"),
         phoneNumber: varchar("phone_number", { length: 255 }),
         phoneNumberVerified: boolean("phone_number_verified").default(false).notNull(),
-        role: varchar("role", { length: 255 }).default("user").notNull(),
+        roleId: varchar("role_id", { length: 36 }).references(() => role.id, { onDelete: "set null" }),
         banned: boolean("banned").default(false).notNull(),
         banReason: text("ban_reason"),
         banExpires: timestamp("ban_expires", { fsp: 3 }),

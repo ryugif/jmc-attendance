@@ -1,6 +1,6 @@
 import { betterAuth } from "better-auth/minimal";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter";
-import { admin, phoneNumber, username } from "better-auth/plugins";
+import { phoneNumber, username } from "better-auth/plugins";
 import { db } from "./db";
 import { authSchema } from "./schema";
 
@@ -29,6 +29,5 @@ export const auth = betterAuth({
             displayUsername: false,
         }),
         phoneNumber(),
-        admin(),
     ],
 });
