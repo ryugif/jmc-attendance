@@ -19,6 +19,7 @@ import {
 import { useRouter } from "next/navigation";
 import { type ReactNode, useState } from "react";
 import AppShellNav from "./app-shell-nav";
+import Image from "next/image";
 
 
 export default function AppShell({
@@ -49,8 +50,13 @@ export default function AppShell({
             <header className="border-b border-zinc-200 bg-white/90">
                 <div className="mx-auto flex items-center justify-between px-6 py-4">
                     <div className="flex items-center gap-3">
-                        <div className="flex h-9 items-center justify-center rounded-2xl bg-violet-600 px-2 text-lg font-bold text-white shadow-sm">
-                            JMC
+                        <div className="flex h-9 items-center justify-center rounded-2xl bg-black px-2 text-lg font-bold text-white shadow-sm">
+                            <Image
+                                src="/favicon.png"
+                                alt="JMC Logo"
+                                width={36}
+                                height={36}
+                            />
                         </div>
                     </div>
 
@@ -89,16 +95,16 @@ export default function AppShell({
                 </div>
             </header>
 
-            <div className="mx-auto flex w-full flex-1 flex-col">
+            <div className="mx-auto flex w-full flex-1 flex-col overflow-auto">
                 <AppShellNav />
 
                 <section className="flex-1 overflow-auto">
-                    <div className="h-full rounded-2xl border border-zinc-200 bg-white shadow-sm">
+                    <div className="rounded-2xl border border-zinc-200 bg-white shadow-sm">
                         <div className="px-6 py-8 text-base text-zinc-700">{children}</div>
                     </div>
                 </section>
 
-                <footer className="py-4 text-center text-sm text-zinc-500">
+                <footer className="py-4 text-center text-sm text-zinc-500 border-t border-zinc-200">
                     © 2026 JMC Attendance
                 </footer>
             </div>
