@@ -22,6 +22,14 @@ export const user = mysqlTable(
         phoneNumber: varchar("phone_number", { length: 255 }),
         phoneNumberVerified: boolean("phone_number_verified").default(false).notNull(),
         roleId: varchar("role_id", { length: 36 }).references(() => role.id, { onDelete: "set null" }),
+        departmentId: varchar("department_id", { length: 36 }).references(() => department.id, {
+            onDelete: "set null",
+        }),
+        jobPositionId: varchar("job_position_id", { length: 36 }).references(() => jobPosition.id, {
+            onDelete: "set null",
+        }),
+        employeeCode: varchar("employee_code", { length: 50 }),
+        isActive: boolean("is_active").default(true).notNull(),
         banned: boolean("banned").default(false).notNull(),
         banReason: text("ban_reason"),
         banExpires: timestamp("ban_expires", { fsp: 3 }),
@@ -33,7 +41,12 @@ export const user = mysqlTable(
             .$onUpdate(() => new Date())
             .notNull(),
     },
-    (table) => [uniqueIndex("user_phoneNumber_uidx").on(table.phoneNumber)],
+    (table) => [
+        uniqueIndex("user_phoneNumber_uidx").on(table.phoneNumber),
+        index("user_department_id_idx").on(table.departmentId),
+        index("user_job_position_id_idx").on(table.jobPositionId),
+        index("user_role_id_idx").on(table.roleId),
+    ],
 );
 
 export const session = mysqlTable(
@@ -183,6 +196,119 @@ export const userRole = mysqlTable(
     ],
 );
 
+export const province = mysqlTable(
+    "province",
+    {
+        id: varchar("id", { length: 36 }).primaryKey(),
+        code: varchar("code", { length: 50 }),
+        name: varchar("name", { length: 255 }).notNull(),
+        description: text("description"),
+        isActive: boolean("is_active").default(true).notNull(),
+        createdAt: timestamp("created_at", { fsp: 3 })
+            .default(sql`CURRENT_TIMESTAMP(3)`)
+            .notNull(),
+        updatedAt: timestamp("updated_at", { fsp: 3 })
+            .default(sql`CURRENT_TIMESTAMP(3)`)
+            .$onUpdate(() => new Date())
+            .notNull(),
+    },
+    (table) => [index("province_name_idx").on(table.name)],
+);
+
+export const regency = mysqlTable(
+    "regency",
+    {
+        id: varchar("id", { length: 36 }).primaryKey(),
+        code: varchar("code", { length: 50 }),
+        name: varchar("name", { length: 255 }).notNull(),
+        description: text("description"),
+        provinceId: varchar("province_id", { length: 36 })
+            .notNull()
+            .references(() => province.id, { onDelete: "cascade" }),
+        isActive: boolean("is_active").default(true).notNull(),
+        createdAt: timestamp("created_at", { fsp: 3 })
+            .default(sql`CURRENT_TIMESTAMP(3)`)
+            .notNull(),
+        updatedAt: timestamp("updated_at", { fsp: 3 })
+            .default(sql`CURRENT_TIMESTAMP(3)`)
+            .$onUpdate(() => new Date())
+            .notNull(),
+    },
+    (table) => [
+        index("regency_province_id_idx").on(table.provinceId),
+        index("regency_name_idx").on(table.name),
+    ],
+);
+
+export const district = mysqlTable(
+    "district",
+    {
+        id: varchar("id", { length: 36 }).primaryKey(),
+        code: varchar("code", { length: 50 }),
+        name: varchar("name", { length: 255 }).notNull(),
+        description: text("description"),
+        regencyId: varchar("regency_id", { length: 36 })
+            .notNull()
+            .references(() => regency.id, { onDelete: "cascade" }),
+        isActive: boolean("is_active").default(true).notNull(),
+        createdAt: timestamp("created_at", { fsp: 3 })
+            .default(sql`CURRENT_TIMESTAMP(3)`)
+            .notNull(),
+        updatedAt: timestamp("updated_at", { fsp: 3 })
+            .default(sql`CURRENT_TIMESTAMP(3)`)
+            .$onUpdate(() => new Date())
+            .notNull(),
+    },
+    (table) => [
+        index("district_regency_id_idx").on(table.regencyId),
+        index("district_name_idx").on(table.name),
+    ],
+);
+
+export const department = mysqlTable(
+    "department",
+    {
+        id: varchar("id", { length: 36 }).primaryKey(),
+        code: varchar("code", { length: 50 }),
+        name: varchar("name", { length: 255 }).notNull(),
+        description: text("description"),
+        isActive: boolean("is_active").default(true).notNull(),
+        createdAt: timestamp("created_at", { fsp: 3 })
+            .default(sql`CURRENT_TIMESTAMP(3)`)
+            .notNull(),
+        updatedAt: timestamp("updated_at", { fsp: 3 })
+            .default(sql`CURRENT_TIMESTAMP(3)`)
+            .$onUpdate(() => new Date())
+            .notNull(),
+    },
+    (table) => [index("department_name_idx").on(table.name)],
+);
+
+export const jobPosition = mysqlTable(
+    "job_position",
+    {
+        id: varchar("id", { length: 36 }).primaryKey(),
+        code: varchar("code", { length: 50 }),
+        name: varchar("name", { length: 255 }).notNull(),
+        description: text("description"),
+        departmentId: varchar("department_id", { length: 36 }).references(() => department.id, {
+            onDelete: "set null",
+        }),
+        isActive: boolean("is_active").default(true).notNull(),
+        createdAt: timestamp("created_at", { fsp: 3 })
+            .default(sql`CURRENT_TIMESTAMP(3)`)
+            .notNull(),
+        updatedAt: timestamp("updated_at", { fsp: 3 })
+            .default(sql`CURRENT_TIMESTAMP(3)`)
+            .$onUpdate(() => new Date())
+            .notNull(),
+    },
+    (table) => [
+        index("job_position_department_id_idx").on(table.departmentId),
+        index("job_position_name_idx").on(table.name),
+    ],
+);
+
 export const authSchema = {
     user,
     session,
@@ -191,4 +317,9 @@ export const authSchema = {
     role,
     rolePermission,
     userRole,
+    province,
+    regency,
+    district,
+    department,
+    jobPosition,
 } as const;
