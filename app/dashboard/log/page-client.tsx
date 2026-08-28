@@ -135,6 +135,10 @@ export default function AuditLogClient() {
     const sortIcon = (field: SortField) =>
         sortField === field ? (sortDirection === "asc" ? <IconChevronUp size={14} /> : <IconChevronDown size={14} />) : null;
 
+    const selectedUser = users.find((user) => user.userId === selectedUserId);
+    const selectedModuleLabel = selectedModule === "all" ? "All modules" : selectedModule;
+    const selectedActionLabel = selectedAction === "all" ? "All actions" : formatAuditAction(selectedAction);
+
     const emptyState = (
         <Empty>
             <EmptyHeader>
@@ -166,10 +170,10 @@ export default function AuditLogClient() {
                 </div>
 
                 <Select value={selectedUserId} onValueChange={handleUserFilterChange}>
-                    <SelectTrigger>
-                        <SelectValue placeholder="All users" />
+                    <SelectTrigger className="w-full">
+                        <SelectValue>{selectedUser ? selectedUser.userName : "All users"}</SelectValue>
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="w-full">
                         <SelectItem value="all">All users</SelectItem>
                         {users.map((user) => (
                             <SelectItem key={user.userId} value={user.userId}>
@@ -180,10 +184,10 @@ export default function AuditLogClient() {
                 </Select>
 
                 <Select value={selectedModule} onValueChange={handleModuleFilterChange}>
-                    <SelectTrigger>
-                        <SelectValue placeholder="All modules" />
+                    <SelectTrigger className="w-full">
+                        <SelectValue>{selectedModuleLabel}</SelectValue>
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="w-full">
                         <SelectItem value="all">All modules</SelectItem>
                         {Object.values(AUDIT_MODULES).map((moduleName) => (
                             <SelectItem key={moduleName} value={moduleName}>
@@ -194,10 +198,10 @@ export default function AuditLogClient() {
                 </Select>
 
                 <Select value={selectedAction} onValueChange={handleActionFilterChange}>
-                    <SelectTrigger>
-                        <SelectValue placeholder="All actions" />
+                    <SelectTrigger className="w-full">
+                        <SelectValue>{selectedActionLabel}</SelectValue>
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="w-full">
                         <SelectItem value="all">All actions</SelectItem>
                         {AUDIT_ACTIONS.map((action) => (
                             <SelectItem key={action} value={action}>
@@ -252,7 +256,7 @@ export default function AuditLogClient() {
                                         <TableCell>{(pagination.page - 1) * pagination.pageSize + index + 1}</TableCell>
                                         <TableCell>
                                             <div className="font-medium">{row.userName}</div>
-                                            <div className="text-xs text-muted-foreground">{row.userId}</div>
+                                            <div className="text-xs text-muted-foreground">#{row.userId}</div>
                                         </TableCell>
                                         <TableCell>{new Date(row.createdAt).toLocaleString("id-ID")}</TableCell>
                                         <TableCell>{row.module}</TableCell>
