@@ -25,68 +25,6 @@ This project is designed to support internal operational workflows for an organi
 - Better Auth
 - shadcn/ui components
 
-## Current Feature Areas
-
-### Authentication and authorization
-
-- email/password sign-in flow via Better Auth
-- username and phone number support via auth plugins
-- inactive-user guard during session creation
-- RBAC permission definitions for roles such as Super Admin, HRD Manager, and HRD Admin
-- module permissions stored in the database
-
-### Employee and user management
-
-- user profile with role, department, and job position relationships
-- admin user screens under the dashboard area
-- employee CRUD flows and employee detail pages
-
-### Attendance management
-
-- attendance status calculation logic
-- late arrival handling and effective working hours evaluation
-- location validation logic for office attendance check-in/check-out
-- test coverage for attendance logic
-
-### Master data management
-
-- province, regency, district, department, and job position management
-- master data pages and model-driven list/detail patterns
-- lookup data used by employee and attendance workflow
-
-### Transport allowance
-
-- allowance settings and calculation logic
-- month-based transport allowance processing
-- support for distance and fare configuration
-
-## Project Structure
-
-```text
-app/
-  api/
-  dashboard/
-  sign-in/
-components/
-lib/
-  attendance-logic.ts
-  attendance.ts
-  auth.ts
-  db.ts
-  master-data.ts
-  rbac.ts
-  schema.ts
-  transport-allowance.ts
-scripts/
-  create-super-admin.ts
-  seed-master-data.ts
-  seed-rbac.ts
-tests/
-  attendance-logic.test.ts
-docker-compose.yml
-drizzle/
-```
-
 ## Prerequisites
 
 - Node.js 20+
@@ -126,6 +64,8 @@ pnpm db:generate
 ```bash
 pnpm db:push
 ```
+
+After the schema is pushed, run the remaining setup steps in order: seed RBAC definitions, seed master data, and finally create a default super admin account.
 
 6. Seed RBAC definitions:
 
@@ -182,10 +122,6 @@ pnpm create:super-admin
 - Better Auth is configured with email/password auth and a custom session hook that blocks inactive users.
 - The RBAC model is database-driven, with role definitions and permission records seeded through scripts.
 - The default database name in the local Docker setup is `better_auth`.
-
-## Status
-
-This repository is in an active development state. Core attendance, authentication, role management, and administrative screens are already present, and the codebase continues to evolve around those business workflows.
 
 ## References
 
