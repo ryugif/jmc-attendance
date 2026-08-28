@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import {
     IconHome,
     IconSettings,
+    IconTicket,
     IconUserCog,
     IconUsers,
 } from "@tabler/icons-react";
@@ -15,6 +16,7 @@ const navItems = [
     { label: "Dashboard", icon: IconHome, href: "/dashboard" },
     { label: "Users", icon: IconUsers, href: "/dashboard/users" },
     { label: "Employees", icon: IconUserCog, href: "/dashboard/employees" },
+    { label: "Transport Allowance", icon: IconTicket, href: "/dashboard/transport-allowance" },
     { label: "Settings", icon: IconSettings, href: "/dashboard/settings" },
 ];
 
