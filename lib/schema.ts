@@ -395,13 +395,30 @@ export const attendance = mysqlTable(
             .notNull()
             .references(() => employee.id, { onDelete: "cascade" }),
         attendanceDate: date("attendance_date").notNull(),
+        attendanceType: mysqlEnum("attendance_type", ["Present", "Leave", "Permission", "Unpaid Leave"])
+            .default("Present")
+            .notNull(),
+        checkInTime: varchar("check_in_time", { length: 20 }),
+        checkOutTime: varchar("check_out_time", { length: 20 }),
+        checkInLocation: mysqlEnum("check_in_location", ["Main Building", "Building A", "Building B"]),
+        checkOutLocation: mysqlEnum("check_out_location", ["Main Building", "Building A", "Building B"]),
+        effectiveWorkingHours: decimal("effective_working_hours", { precision: 5, scale: 1 }).default("0.0").notNull(),
+        status: mysqlEnum("status", ["Fulfilled", "Not Fulfilled"]).default("Not Fulfilled").notNull(),
+        verification: mysqlEnum("verification", ["Approved", "Rejected"]).default("Approved").notNull(),
+        verifier: mysqlEnum("verifier", ["Lead", "Manager", "HRD"]).default("Lead").notNull(),
+        notes: text("notes"),
         isPresent: boolean("is_present").default(true).notNull(),
         createdAt: timestamp("created_at", { fsp: 3 })
             .default(sql`CURRENT_TIMESTAMP(3)`)
             .notNull(),
+        updatedAt: timestamp("updated_at", { fsp: 3 })
+            .default(sql`CURRENT_TIMESTAMP(3)`)
+            .$onUpdate(() => new Date())
+            .notNull(),
     },
     (table) => [
         index("attendance_employee_id_idx").on(table.employeeId),
+        index("attendance_status_idx").on(table.status),
         uniqueIndex("attendance_employee_date_uidx").on(table.employeeId, table.attendanceDate),
     ],
 );

@@ -2,6 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import {
+    IconCalendar,
     IconHome,
     IconSettings,
     IconTicket,
@@ -16,6 +17,7 @@ const navItems = [
     { label: "Dashboard", icon: IconHome, href: "/dashboard" },
     { label: "Users", icon: IconUsers, href: "/dashboard/users" },
     { label: "Employees", icon: IconUserCog, href: "/dashboard/employees" },
+    { label: "Attendance", icon: IconCalendar, href: "/dashboard/attendance" },
     { label: "Transport Allowance", icon: IconTicket, href: "/dashboard/transport-allowance" },
     { label: "Settings", icon: IconSettings, href: "/dashboard/settings" },
 ];
