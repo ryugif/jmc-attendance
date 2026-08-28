@@ -29,6 +29,11 @@ export const MASTER_DATA_MODULES = [
         label: "Job Position",
         description: "Job position master data linked to departments.",
     },
+    {
+        slug: "transport-allowance",
+        label: "Transport Allowance",
+        description: "Configure transport base fare and the effective distance bands.",
+    },
 ] as const;
 
 export type MasterDataModuleSlug = (typeof MASTER_DATA_MODULES)[number]["slug"];

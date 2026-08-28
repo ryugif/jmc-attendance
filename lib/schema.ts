@@ -3,6 +3,7 @@ import {
     boolean,
     date,
     index,
+    decimal,
     int,
     mysqlEnum,
     mysqlTable,
@@ -386,6 +387,77 @@ export const employeeEducation = mysqlTable(
     ],
 );
 
+export const attendance = mysqlTable(
+    "attendance",
+    {
+        id: varchar("id", { length: 36 }).primaryKey(),
+        employeeId: varchar("employee_id", { length: 36 })
+            .notNull()
+            .references(() => employee.id, { onDelete: "cascade" }),
+        attendanceDate: date("attendance_date").notNull(),
+        isPresent: boolean("is_present").default(true).notNull(),
+        createdAt: timestamp("created_at", { fsp: 3 })
+            .default(sql`CURRENT_TIMESTAMP(3)`)
+            .notNull(),
+    },
+    (table) => [
+        index("attendance_employee_id_idx").on(table.employeeId),
+        uniqueIndex("attendance_employee_date_uidx").on(table.employeeId, table.attendanceDate),
+    ],
+);
+
+export const transportAllowanceSetting = mysqlTable(
+    "transport_allowance_setting",
+    {
+        id: varchar("id", { length: 36 }).primaryKey(),
+        baseFare: int("base_fare").notNull(),
+        minDistance: decimal("min_distance", { precision: 10, scale: 2 }).notNull(),
+        maxDistance: decimal("max_distance", { precision: 10, scale: 2 }).notNull(),
+        effectiveFrom: date("effective_from").notNull(),
+        createdAt: timestamp("created_at", { fsp: 3 })
+            .default(sql`CURRENT_TIMESTAMP(3)`)
+            .notNull(),
+        updatedAt: timestamp("updated_at", { fsp: 3 })
+            .default(sql`CURRENT_TIMESTAMP(3)`)
+            .$onUpdate(() => new Date())
+            .notNull(),
+    },
+    (table) => [index("transport_allowance_setting_effective_from_idx").on(table.effectiveFrom)],
+);
+
+export const transportAllowanceResult = mysqlTable(
+    "transport_allowance_result",
+    {
+        id: varchar("id", { length: 36 }).primaryKey(),
+        employeeId: varchar("employee_id", { length: 36 })
+            .notNull()
+            .references(() => employee.id, { onDelete: "cascade" }),
+        year: int("year").notNull(),
+        month: int("month").notNull(),
+        baseFare: int("base_fare").notNull(),
+        roundedDistance: decimal("rounded_distance", { precision: 10, scale: 2 }).notNull(),
+        eligibleDistance: decimal("eligible_distance", { precision: 10, scale: 2 }).notNull(),
+        workingDays: int("working_days").notNull(),
+        amount: int("amount").notNull(),
+        createdAt: timestamp("created_at", { fsp: 3 })
+            .default(sql`CURRENT_TIMESTAMP(3)`)
+            .notNull(),
+        updatedAt: timestamp("updated_at", { fsp: 3 })
+            .default(sql`CURRENT_TIMESTAMP(3)`)
+            .$onUpdate(() => new Date())
+            .notNull(),
+    },
+    (table) => [
+        index("transport_allowance_result_employee_idx").on(table.employeeId),
+        index("transport_allowance_result_year_month_idx").on(table.year, table.month),
+        uniqueIndex("transport_allowance_result_employee_year_month_uidx").on(
+            table.employeeId,
+            table.year,
+            table.month,
+        ),
+    ],
+);
+
 export const authSchema = {
     user,
     session,
@@ -401,4 +473,7 @@ export const authSchema = {
     jobPosition,
     employee,
     employeeEducation,
+    attendance,
+    transportAllowanceSetting,
+    transportAllowanceResult,
 } as const;
