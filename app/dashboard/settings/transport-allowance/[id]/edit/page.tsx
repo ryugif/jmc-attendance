@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldContent, FieldError, FieldGroup, FieldLabel, FieldSet } from "@/components/ui/field";
 import { InputGroup, InputGroupInput, InputGroupText } from "@/components/ui/input-group";
 import { Input } from "@/components/ui/input";
-import { getTransportAllowanceSettingDetail, updateTransportAllowanceSetting } from "@/lib/transport-allowance";
+import { getTransportAllowanceSettingDetail, updateTransportAllowanceSetting } from "../../actions";
 
 const schema = z.object({
     baseFare: z.number({ message: "Base fare is required." }).positive("Base fare must be greater than 0."),

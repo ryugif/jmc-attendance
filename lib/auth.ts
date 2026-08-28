@@ -2,6 +2,7 @@ import { betterAuth, APIError } from "better-auth";
 import { drizzleAdapter } from "@better-auth/drizzle-adapter";
 import { phoneNumber, username } from "better-auth/plugins";
 import { db } from "./db";
+import { recordAuditLog, AUDIT_ACTIONS, AUDIT_MODULES } from "./audit";
 import { authSchema } from "./schema";
 
 function requireEnv(name: string, value: string | undefined, fallback?: string): string {
@@ -34,8 +35,8 @@ export const auth = betterAuth({
 
                     const user = (await ctx.context.internalAdapter.findUserById(session.userId)) as
                         | {
-                              isActive?: boolean | null;
-                          }
+                            isActive?: boolean | null;
+                        }
                         | null;
 
                     if (user?.isActive === false) {
@@ -44,6 +45,27 @@ export const auth = betterAuth({
                             message: "Your account is inactive. Please contact the administrator.",
                         });
                     }
+                },
+                async after(session, ctx) {
+                    const user = (await ctx?.context.internalAdapter.findUserById(session.userId)) as
+                        | {
+                            name?: string | null;
+                            username?: string | null;
+                        }
+                        | null;
+
+                    await recordAuditLog({
+                        userId: session.userId,
+                        userName: user?.name || user?.username || "User",
+                        module: AUDIT_MODULES.LOG,
+                        action: AUDIT_ACTIONS[4],
+                        description: "User signed in.",
+                        ipAddress: session.ipAddress ?? null,
+                        userAgent: session.userAgent ?? null,
+                        metadata: {
+                            sessionId: session.id,
+                        },
+                    });
                 },
             },
         },

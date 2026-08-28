@@ -75,6 +75,31 @@ export const session = mysqlTable(
     (table) => [index("session_userId_idx").on(table.userId)],
 );
 
+export const auditLog = mysqlTable(
+    "audit_log",
+    {
+        id: varchar("id", { length: 36 }).primaryKey(),
+        userId: varchar("user_id", { length: 36 }).references(() => user.id, { onDelete: "set null" }),
+        userName: varchar("user_name", { length: 255 }).notNull(),
+        module: varchar("module", { length: 255 }).notNull(),
+        action: mysqlEnum("action", ["CREATE", "READ", "UPDATE", "DELETE", "LOGIN", "LOGOUT"]).notNull(),
+        resourceId: varchar("resource_id", { length: 255 }),
+        description: text("description"),
+        ipAddress: text("ip_address"),
+        userAgent: text("user_agent"),
+        metadata: text("metadata"),
+        createdAt: timestamp("created_at", { fsp: 3 })
+            .default(sql`CURRENT_TIMESTAMP(3)`)
+            .notNull(),
+    },
+    (table) => [
+        index("audit_log_user_id_idx").on(table.userId),
+        index("audit_log_module_idx").on(table.module),
+        index("audit_log_action_idx").on(table.action),
+        index("audit_log_created_at_idx").on(table.createdAt),
+    ],
+);
+
 export const account = mysqlTable(
     "account",
     {
@@ -479,6 +504,7 @@ export const transportAllowanceResult = mysqlTable(
 export const authSchema = {
     user,
     session,
+    auditLog,
     account,
     verification,
     role,

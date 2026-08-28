@@ -2,6 +2,8 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 
 import { auth } from "@/lib/auth";
+import { AUDIT_ACTIONS, AUDIT_MODULES } from "@/lib/audit";
+import { logAuditEvent } from "@/lib/audit-context";
 import { getDashboardDataForUser } from "@/lib/dashboard";
 import { getUserRoleNameByUserId } from "@/lib/rbac";
 
@@ -25,6 +27,11 @@ export async function GET() {
 
     try {
         const data = await getDashboardDataForUser(session.user.id);
+        await logAuditEvent({
+            module: AUDIT_MODULES.DASHBOARD,
+            action: AUDIT_ACTIONS[1],
+            description: "Dashboard data accessed.",
+        });
         return NextResponse.json(data);
     } catch (error) {
         return NextResponse.json(

@@ -5,6 +5,8 @@ import { revalidatePath } from "next/cache";
 import { and, count, desc, eq, like, or } from "drizzle-orm";
 
 import { auth } from "@/lib/auth";
+import { AUDIT_ACTIONS, AUDIT_MODULES } from "@/lib/audit";
+import { logAuditEvent } from "@/lib/audit-context";
 import { db } from "@/lib/db";
 import { authSchema, department, jobPosition, role, user, userRole } from "@/lib/schema";
 
@@ -126,6 +128,13 @@ export async function create(data: {
             }
         }
 
+        await logAuditEvent({
+            module: AUDIT_MODULES.USERS,
+            action: AUDIT_ACTIONS[0],
+            resourceId: userId,
+            description: `User ${name} created.`,
+        });
+
         revalidatePath("/dashboard/users");
         return { success: true, id: userId };
     } catch (error) {
@@ -211,6 +220,13 @@ export async function update(id: string, data: {
             }
         }
 
+        await logAuditEvent({
+            module: AUDIT_MODULES.USERS,
+            action: AUDIT_ACTIONS[2],
+            resourceId: id,
+            description: `User ${nextName} updated.`,
+        });
+
         revalidatePath("/dashboard/users");
         return { success: true };
     } catch (error) {
@@ -224,6 +240,12 @@ export async function update(id: string, data: {
 
 export async function getList(page: number = 1, pageSize: number = 10) {
     try {
+        await logAuditEvent({
+            module: AUDIT_MODULES.USERS,
+            action: AUDIT_ACTIONS[1],
+            description: "User list accessed.",
+        });
+
         const offset = (page - 1) * pageSize;
 
         const [users, totalResult] = await Promise.all([
@@ -276,6 +298,13 @@ export async function getList(page: number = 1, pageSize: number = 10) {
 
 export async function search(query: string, page: number = 1, pageSize: number = 10) {
     try {
+        await logAuditEvent({
+            module: AUDIT_MODULES.USERS,
+            action: AUDIT_ACTIONS[1],
+            description: "User search executed.",
+            metadata: { query },
+        });
+
         const offset = (page - 1) * pageSize;
         const searchQuery = `%${query.trim()}%`;
 
@@ -350,6 +379,13 @@ export async function search(query: string, page: number = 1, pageSize: number =
 
 export async function getDetail(id: string) {
     try {
+        await logAuditEvent({
+            module: AUDIT_MODULES.USERS,
+            action: AUDIT_ACTIONS[1],
+            resourceId: id,
+            description: "User detail accessed.",
+        });
+
         const [record] = await db
             .select({
                 id: user.id,
@@ -394,7 +430,16 @@ export async function getDetail(id: string) {
 
 export async function deleteItem(id: string) {
     try {
+        const [existing] = await db.select({ name: user.name }).from(user).where(eq(user.id, id)).limit(1);
         await db.delete(user).where(eq(user.id, id));
+
+        await logAuditEvent({
+            module: AUDIT_MODULES.USERS,
+            action: AUDIT_ACTIONS[3],
+            resourceId: id,
+            description: `User ${existing?.name || id} deleted.`,
+        });
+
         revalidatePath("/dashboard/users");
         return { success: true };
     } catch (error) {

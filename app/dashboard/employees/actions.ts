@@ -4,6 +4,8 @@ import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { and, count, desc, eq, inArray, like, or, sql } from "drizzle-orm";
 
+import { AUDIT_ACTIONS, AUDIT_MODULES } from "@/lib/audit";
+import { logAuditEvent } from "@/lib/audit-context";
 import { db } from "@/lib/db";
 import { department, district, employee, employeeEducation, province, regency } from "@/lib/schema";
 
@@ -293,6 +295,14 @@ export async function createEmployee(data: {
         );
     }
 
+    await logAuditEvent({
+        module: AUDIT_MODULES.EMPLOYEES,
+        action: AUDIT_ACTIONS[0],
+        resourceId: employeeId,
+        description: `Employee ${name} created.`,
+        metadata: { nip },
+    });
+
     revalidatePath("/dashboard/employees");
     return { success: true, id: employeeId };
 }
@@ -439,6 +449,14 @@ export async function updateEmployee(
         }
     }
 
+    await logAuditEvent({
+        module: AUDIT_MODULES.EMPLOYEES,
+        action: AUDIT_ACTIONS[2],
+        resourceId: id,
+        description: `Employee ${nextName} updated.`,
+        metadata: { nip: nextNip },
+    });
+
     revalidatePath("/dashboard/employees");
     return { success: true };
 }
@@ -454,6 +472,13 @@ export async function getEmployeeList(
         contractStatus?: string;
     } = {},
 ) {
+    await logAuditEvent({
+        module: AUDIT_MODULES.EMPLOYEES,
+        action: AUDIT_ACTIONS[1],
+        description: "Employee list accessed.",
+        metadata: filters,
+    });
+
     const offset = (page - 1) * pageSize;
     const search = filters.search?.trim() || "";
     const whereClauses = [] as ReturnType<typeof and>[];
@@ -543,6 +568,13 @@ export async function getEmployeeList(
 }
 
 export async function getEmployeeDetail(id: string) {
+    await logAuditEvent({
+        module: AUDIT_MODULES.EMPLOYEES,
+        action: AUDIT_ACTIONS[1],
+        resourceId: id,
+        description: "Employee detail accessed.",
+    });
+
     const [employeeRecord] = await db
         .select({
             id: employee.id,
@@ -604,7 +636,16 @@ export async function getEmployeeDetail(id: string) {
 }
 
 export async function deleteEmployee(id: string) {
+    const [existing] = await db.select({ name: employee.name }).from(employee).where(eq(employee.id, id)).limit(1);
     await db.delete(employee).where(eq(employee.id, id));
+
+    await logAuditEvent({
+        module: AUDIT_MODULES.EMPLOYEES,
+        action: AUDIT_ACTIONS[3],
+        resourceId: id,
+        description: `Employee ${existing?.name || id} deleted.`,
+    });
+
     revalidatePath("/dashboard/employees");
     return { success: true };
 }
@@ -615,6 +656,14 @@ export async function bulkDeleteEmployees(ids: string[]) {
     }
 
     await db.delete(employee).where(inArray(employee.id, ids));
+
+    await logAuditEvent({
+        module: AUDIT_MODULES.EMPLOYEES,
+        action: AUDIT_ACTIONS[3],
+        description: "Employees deleted in bulk.",
+        metadata: { ids },
+    });
+
     revalidatePath("/dashboard/employees");
     return { success: true };
 }
@@ -625,6 +674,14 @@ export async function bulkUpdateEmployeeStatus(ids: string[], status: EmployeeSt
     }
 
     await db.update(employee).set({ status, updatedAt: new Date() }).where(inArray(employee.id, ids));
+
+    await logAuditEvent({
+        module: AUDIT_MODULES.EMPLOYEES,
+        action: AUDIT_ACTIONS[2],
+        description: `Employee statuses updated to ${status}.`,
+        metadata: { ids, status },
+    });
+
     revalidatePath("/dashboard/employees");
     return { success: true };
 }

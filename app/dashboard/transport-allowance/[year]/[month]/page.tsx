@@ -7,7 +7,7 @@ import GlobalHeader from "@/components/global-header";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatCurrency } from "@/lib/utils";
-import { calculateMonthlyAllowance, getMonthlyTransportAllowanceDetail } from "@/lib/transport-allowance";
+import { calculateMonthlyAllowance, getMonthlyTransportAllowanceDetail } from "../../actions";
 
 type TransportAllowanceDetailRow = {
     id: string;

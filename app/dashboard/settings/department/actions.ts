@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { randomUUID } from "node:crypto";
 import { eq, count, like, or } from "drizzle-orm";
 
+import { AUDIT_ACTIONS, AUDIT_MODULES } from "@/lib/audit";
+import { logAuditEvent } from "@/lib/audit-context";
 import { db } from "@/lib/db";
 import { department } from "@/lib/schema";
 
@@ -21,6 +23,13 @@ export async function create(data: {
             name: data.name.trim(),
             description: data.description?.trim() || undefined,
             isActive: data.isActive ?? true,
+        });
+
+        await logAuditEvent({
+            module: AUDIT_MODULES.DEPARTMENT,
+            action: AUDIT_ACTIONS[0],
+            resourceId: id,
+            description: `Department ${data.name.trim()} created.`,
         });
 
         revalidatePath("/dashboard/settings/department");
@@ -43,6 +52,13 @@ export async function update(id: string, data: {
             isActive: data.isActive,
         }).where(eq(department.id, id));
 
+        await logAuditEvent({
+            module: AUDIT_MODULES.DEPARTMENT,
+            action: AUDIT_ACTIONS[2],
+            resourceId: id,
+            description: "Department updated.",
+        });
+
         revalidatePath("/dashboard/settings/department");
         return { success: true };
     } catch (error) {
@@ -53,6 +69,12 @@ export async function update(id: string, data: {
 
 export async function getList(page: number = 1, pageSize: number = 10) {
     try {
+        await logAuditEvent({
+            module: AUDIT_MODULES.DEPARTMENT,
+            action: AUDIT_ACTIONS[1],
+            description: "Department list accessed.",
+        });
+
         const offset = (page - 1) * pageSize;
 
         const [departments, totalResult] = await Promise.all([
@@ -81,6 +103,13 @@ export async function getList(page: number = 1, pageSize: number = 10) {
 
 export async function search(query: string, page: number = 1, pageSize: number = 10) {
     try {
+        await logAuditEvent({
+            module: AUDIT_MODULES.DEPARTMENT,
+            action: AUDIT_ACTIONS[1],
+            description: "Department search executed.",
+            metadata: { query },
+        });
+
         const offset = (page - 1) * pageSize;
         const searchQuery = `%${query}%`;
 
@@ -122,6 +151,13 @@ export async function search(query: string, page: number = 1, pageSize: number =
 
 export async function getDetail(id: string) {
     try {
+        await logAuditEvent({
+            module: AUDIT_MODULES.DEPARTMENT,
+            action: AUDIT_ACTIONS[1],
+            resourceId: id,
+            description: "Department detail accessed.",
+        });
+
         const result = await db.select().from(department).where(eq(department.id, id));
 
         if (result.length === 0) {
@@ -140,7 +176,15 @@ export async function getDetail(id: string) {
 
 export async function deleteItem(id: string) {
     try {
+        const [existing] = await db.select({ name: department.name }).from(department).where(eq(department.id, id)).limit(1);
         await db.delete(department).where(eq(department.id, id));
+
+        await logAuditEvent({
+            module: AUDIT_MODULES.DEPARTMENT,
+            action: AUDIT_ACTIONS[3],
+            resourceId: id,
+            description: `Department ${existing?.name || id} deleted.`,
+        });
 
         revalidatePath("/dashboard/settings/department");
         return { success: true };

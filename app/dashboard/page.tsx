@@ -4,6 +4,8 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/lib/auth";
+import { AUDIT_ACTIONS, AUDIT_MODULES } from "@/lib/audit";
+import { logAuditEvent } from "@/lib/audit-context";
 import { getDashboardDataForUser, type DashboardEmployeeSummary } from "@/lib/dashboard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
@@ -115,6 +117,12 @@ export default async function DashboardPage() {
     const userName = session.user.name || "User";
     const dashboardData = await getDashboardDataForUser(session.user.id);
     const roleName = formatRoleName(dashboardData.role ?? "User");
+
+    await logAuditEvent({
+        module: AUDIT_MODULES.DASHBOARD,
+        action: AUDIT_ACTIONS[1],
+        description: "Dashboard page accessed.",
+    });
 
     if (roleName === "Superadmin" || roleName === "HR Admin") {
         return <WelcomeCard userName={userName} role={roleName} />;

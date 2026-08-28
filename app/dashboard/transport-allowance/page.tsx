@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatCurrency } from "@/lib/utils";
-import { getMonthlyTransportAllowanceList } from "@/lib/transport-allowance";
+import { getMonthlyTransportAllowanceList } from "./actions";
 
 type MonthlyAllowanceRow = {
     month: number;

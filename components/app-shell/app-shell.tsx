@@ -12,7 +12,6 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { authClient } from "@/lib/auth-client";
 import {
     IconLogout
 } from "@tabler/icons-react";
@@ -36,7 +35,9 @@ export default function AppShell({
         setIsLoggingOut(true);
 
         try {
-            await authClient.signOut();
+            await fetch("/api/auth/logout", {
+                method: "POST",
+            });
             router.replace("/sign-in");
             router.refresh();
         } catch (error) {

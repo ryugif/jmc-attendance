@@ -8,6 +8,7 @@ import {
     IconMotorbike,
     IconSettings,
     IconTicket,
+    IconLogs,
     IconUserCog,
     IconUsers,
 } from "@tabler/icons-react";
@@ -21,6 +22,7 @@ const navItems = [
     { label: "Employees", icon: IconUserCog, href: "/dashboard/employees" },
     { label: "Attendance", icon: IconCalendar, href: "/dashboard/attendance" },
     { label: "Transport Allowance", icon: IconCar, href: "/dashboard/transport-allowance" },
+    { label: "Audit Log", icon: IconLogs, href: "/dashboard/log" },
     { label: "Settings", icon: IconSettings, href: "/dashboard/settings" },
 ];
 

@@ -2,8 +2,16 @@ import Link from "next/link";
 
 import { MASTER_DATA_MODULES } from "@/lib/master-data";
 import GlobalHeader from "@/components/global-header";
+import { AUDIT_ACTIONS, AUDIT_MODULES } from "@/lib/audit";
+import { logAuditEvent } from "@/lib/audit-context";
 
-export default function SettingsPage() {
+export default async function SettingsPage() {
+    await logAuditEvent({
+        module: AUDIT_MODULES.SETTINGS,
+        action: AUDIT_ACTIONS[1],
+        description: "Settings overview accessed.",
+    });
+
     return (
         <div className="space-y-6">
             <GlobalHeader title="Master Data" description="Manage shared reference data used across employee and organization records." />
