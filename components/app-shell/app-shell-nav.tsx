@@ -3,7 +3,9 @@
 import { cn } from "@/lib/utils";
 import {
     IconCalendar,
+    IconCar,
     IconHome,
+    IconMotorbike,
     IconSettings,
     IconTicket,
     IconUserCog,
@@ -18,7 +20,7 @@ const navItems = [
     { label: "Users", icon: IconUsers, href: "/dashboard/users" },
     { label: "Employees", icon: IconUserCog, href: "/dashboard/employees" },
     { label: "Attendance", icon: IconCalendar, href: "/dashboard/attendance" },
-    { label: "Transport Allowance", icon: IconTicket, href: "/dashboard/transport-allowance" },
+    { label: "Transport Allowance", icon: IconCar, href: "/dashboard/transport-allowance" },
     { label: "Settings", icon: IconSettings, href: "/dashboard/settings" },
 ];
 
