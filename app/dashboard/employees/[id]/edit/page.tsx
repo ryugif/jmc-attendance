@@ -55,6 +55,15 @@ interface DepartmentOption {
 const baseEducation = { level: "", schoolName: "", graduationYear: new Date().getFullYear() };
 const educationLevelOptions = ["SD", "SMP", "SMA", "SMK", "D1", "D2", "D3", "D4", "S1", "S2", "S3"];
 
+function requiredLabel(label: string) {
+    return (
+        <>
+            {label}
+            <span className="text-destructive">*</span>
+        </>
+    );
+}
+
 function toDateInputValue(value: string | Date | null | undefined) {
     if (!value) {
         return "";
@@ -391,7 +400,7 @@ export default function EditEmployeePage() {
 
                         <div className="grid gap-5 md:grid-cols-2">
                             <Field>
-                                <FieldLabel htmlFor="nip">NIP</FieldLabel>
+                                <FieldLabel htmlFor="nip">{requiredLabel("NIP")}</FieldLabel>
                                 <FieldContent>
                                     <Input
                                         id="nip"
@@ -408,7 +417,7 @@ export default function EditEmployeePage() {
                             </Field>
 
                             <Field>
-                                <FieldLabel htmlFor="name">Employee Name</FieldLabel>
+                                <FieldLabel htmlFor="name">{requiredLabel("Employee Name")}</FieldLabel>
                                 <FieldContent>
                                     <Input id="name" {...register("name")} aria-invalid={!!errors.name} />
                                 </FieldContent>
@@ -416,7 +425,7 @@ export default function EditEmployeePage() {
                             </Field>
 
                             <Field>
-                                <FieldLabel htmlFor="email">Email</FieldLabel>
+                                <FieldLabel htmlFor="email">{requiredLabel("Email")}</FieldLabel>
                                 <FieldContent>
                                     <Input id="email" type="email" {...register("email")} aria-invalid={!!errors.email} />
                                 </FieldContent>
@@ -424,7 +433,7 @@ export default function EditEmployeePage() {
                             </Field>
 
                             <Field>
-                                <FieldLabel htmlFor="phoneNumber">Phone Number</FieldLabel>
+                                <FieldLabel htmlFor="phoneNumber">{requiredLabel("Phone Number")}</FieldLabel>
                                 <FieldContent>
                                     <Input id="phoneNumber" {...register("phoneNumber")} aria-invalid={!!errors.phoneNumber} />
                                 </FieldContent>
@@ -432,7 +441,7 @@ export default function EditEmployeePage() {
                             </Field>
 
                             <Field>
-                                <FieldLabel htmlFor="placeOfBirth">Place of Birth</FieldLabel>
+                                <FieldLabel htmlFor="placeOfBirth">{requiredLabel("Place of Birth")}</FieldLabel>
                                 <FieldContent>
                                     <Input id="placeOfBirth" {...register("placeOfBirth")} aria-invalid={!!errors.placeOfBirth} />
                                 </FieldContent>
@@ -440,7 +449,7 @@ export default function EditEmployeePage() {
                             </Field>
 
                             <Field>
-                                <FieldLabel htmlFor="provinceId">Province</FieldLabel>
+                                <FieldLabel htmlFor="provinceId">{requiredLabel("Province")}</FieldLabel>
                                 <FieldContent>
                                     <Controller
                                         name="provinceId"
@@ -473,7 +482,7 @@ export default function EditEmployeePage() {
                             </Field>
 
                             <Field>
-                                <FieldLabel htmlFor="regencyId">Regency</FieldLabel>
+                                <FieldLabel htmlFor="regencyId">{requiredLabel("Regency")}</FieldLabel>
                                 <FieldContent>
                                     <Controller
                                         name="regencyId"
@@ -506,7 +515,7 @@ export default function EditEmployeePage() {
                             </Field>
 
                             <Field>
-                                <FieldLabel htmlFor="districtId">District</FieldLabel>
+                                <FieldLabel htmlFor="districtId">{requiredLabel("District")}</FieldLabel>
                                 <FieldContent>
                                     <Controller
                                         name="districtId"
@@ -539,7 +548,7 @@ export default function EditEmployeePage() {
                             </Field>
 
                             <Field className="md:col-span-2">
-                                <FieldLabel htmlFor="fullAddress">Full Address</FieldLabel>
+                                <FieldLabel htmlFor="fullAddress">{requiredLabel("Full Address")}</FieldLabel>
                                 <FieldContent>
                                     <Textarea id="fullAddress" rows={4} {...register("fullAddress")} aria-invalid={!!errors.fullAddress} placeholder="Enter employee address" />
                                 </FieldContent>
@@ -547,7 +556,7 @@ export default function EditEmployeePage() {
                             </Field>
 
                             <Field>
-                                <FieldLabel htmlFor="homeToOfficeDistance">Home-to-Office Distance</FieldLabel>
+                                <FieldLabel htmlFor="homeToOfficeDistance">{requiredLabel("Home-to-Office Distance")}</FieldLabel>
                                 <FieldContent>
                                     <Input id="homeToOfficeDistance" type="number" min={0} max={99} {...register("homeToOfficeDistance")} aria-invalid={!!errors.homeToOfficeDistance} />
                                 </FieldContent>
@@ -555,7 +564,7 @@ export default function EditEmployeePage() {
                             </Field>
 
                             <Field>
-                                <FieldLabel htmlFor="dateOfBirth">Date of Birth</FieldLabel>
+                                <FieldLabel htmlFor="dateOfBirth">{requiredLabel("Date of Birth")}</FieldLabel>
                                 <FieldContent>
                                     <Input id="dateOfBirth" type="date" {...register("dateOfBirth")} aria-invalid={!!errors.dateOfBirth} />
                                 </FieldContent>
@@ -570,7 +579,7 @@ export default function EditEmployeePage() {
                             </Field>
 
                             <Field>
-                                <FieldLabel>Marital Status</FieldLabel>
+                                <FieldLabel>{requiredLabel("Marital Status")}</FieldLabel>
                                 <FieldContent>
                                     <div className="flex gap-4">
                                         <label className="flex items-center gap-2"><input type="radio" value="Married" {...register("maritalStatus")} />Married</label>
@@ -581,7 +590,7 @@ export default function EditEmployeePage() {
                             </Field>
 
                             <Field>
-                                <FieldLabel htmlFor="numberOfChildren">Number of Children</FieldLabel>
+                                <FieldLabel htmlFor="numberOfChildren">{requiredLabel("Number of Children")}</FieldLabel>
                                 <FieldContent>
                                     <Input id="numberOfChildren" type="number" min={0} max={99} {...register("numberOfChildren")} aria-invalid={!!errors.numberOfChildren} />
                                 </FieldContent>
@@ -589,7 +598,7 @@ export default function EditEmployeePage() {
                             </Field>
 
                             <Field>
-                                <FieldLabel htmlFor="joinDate">Join Date</FieldLabel>
+                                <FieldLabel htmlFor="joinDate">{requiredLabel("Join Date")}</FieldLabel>
                                 <FieldContent>
                                     <Input id="joinDate" type="date" {...register("joinDate")} aria-invalid={!!errors.joinDate} />
                                 </FieldContent>
@@ -597,7 +606,7 @@ export default function EditEmployeePage() {
                             </Field>
 
                             <Field>
-                                <FieldLabel>Position</FieldLabel>
+                                <FieldLabel>{requiredLabel("Position")}</FieldLabel>
                                 <FieldContent>
                                     <Controller name="position" control={control} render={({ field }) => (
                                         <select value={field.value} onChange={(event) => field.onChange(event.target.value)} className="rounded-md border border-input bg-background px-3 py-2 text-sm">
@@ -611,7 +620,7 @@ export default function EditEmployeePage() {
                             </Field>
 
                             <Field>
-                                <FieldLabel>Department</FieldLabel>
+                                <FieldLabel>{requiredLabel("Department")}</FieldLabel>
                                 <FieldContent>
                                     <Controller name="departmentId" control={control} render={({ field }) => (
                                         <select value={field.value} onChange={(event) => field.onChange(event.target.value)} className="rounded-md border border-input bg-background px-3 py-2 text-sm">
@@ -626,7 +635,7 @@ export default function EditEmployeePage() {
                             </Field>
 
                             <Field>
-                                <FieldLabel>Contract Status</FieldLabel>
+                                <FieldLabel>{requiredLabel("Contract Status")}</FieldLabel>
                                 <FieldContent>
                                     <Controller name="contractStatus" control={control} render={({ field }) => (
                                         <select value={field.value} onChange={(event) => field.onChange(event.target.value)} className="rounded-md border border-input bg-background px-3 py-2 text-sm">
@@ -640,7 +649,7 @@ export default function EditEmployeePage() {
                             </Field>
 
                             <Field>
-                                <FieldLabel>Status</FieldLabel>
+                                <FieldLabel>{requiredLabel("Status")}</FieldLabel>
                                 <FieldContent>
                                     <div className="flex gap-4">
                                         <label className="flex items-center gap-2"><input type="radio" value="Active" {...register("status")} />Active</label>
@@ -660,7 +669,9 @@ export default function EditEmployeePage() {
                             {fields.map((field, index) => (
                                 <div key={field.id} className="grid gap-3 rounded-md border border-input p-3 md:grid-cols-[1fr_1.5fr_0.8fr_auto]">
                                     <div>
-                                        <label className="mb-1 block text-sm font-medium">Level</label>
+                                        <label className="mb-1 block text-sm font-medium">
+                                            {requiredLabel("Level")}
+                                        </label>
                                         <Controller
                                             name={`education.${index}.level` as const}
                                             control={control}
@@ -680,12 +691,16 @@ export default function EditEmployeePage() {
                                         <FieldError errors={errors.education?.[index]?.level ? [errors.education[index].level] : []} />
                                     </div>
                                     <div>
-                                        <label className="mb-1 block text-sm font-medium">School Name</label>
+                                        <label className="mb-1 block text-sm font-medium">
+                                            {requiredLabel("School Name")}
+                                        </label>
                                         <input className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" {...register(`education.${index}.schoolName` as const)} />
                                         <FieldError errors={errors.education?.[index]?.schoolName ? [errors.education[index].schoolName] : []} />
                                     </div>
                                     <div>
-                                        <label className="mb-1 block text-sm font-medium">Grad. Year</label>
+                                        <label className="mb-1 block text-sm font-medium">
+                                            {requiredLabel("Grad. Year")}
+                                        </label>
                                         <input type="number" className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" {...register(`education.${index}.graduationYear` as const)} />
                                         <FieldError errors={errors.education?.[index]?.graduationYear ? [errors.education[index].graduationYear] : []} />
                                     </div>
