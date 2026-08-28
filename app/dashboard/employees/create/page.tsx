@@ -39,6 +39,7 @@ const employeeSchema = z.object({
     homeToOfficeDistance: z.coerce.number().min(0, "Distance must be positive").max(99, "Distance must be max 2 digits"),
     dateOfBirth: z.string().min(1, "Date of birth is required"),
     age: z.coerce.number().min(0, "Age is invalid"),
+    gender: z.enum(["Male", "Female"]),
     maritalStatus: z.enum(["Married", "Not Married"]),
     numberOfChildren: z.coerce.number().min(0, "Number of children cannot be negative").max(99, "Number of children must be max 2 digits"),
     joinDate: z.string().min(1, "Join date is required"),
@@ -95,6 +96,7 @@ export default function CreateEmployeePage() {
             homeToOfficeDistance: 0,
             dateOfBirth: "",
             age: 0,
+            gender: "Male",
             maritalStatus: "Married",
             numberOfChildren: 0,
             joinDate: "",
@@ -220,6 +222,7 @@ export default function CreateEmployeePage() {
                 fullAddress: data.fullAddress,
                 homeToOfficeDistance: Number(data.homeToOfficeDistance),
                 dateOfBirth: data.dateOfBirth,
+                gender: data.gender,
                 maritalStatus: data.maritalStatus,
                 numberOfChildren: Number(data.numberOfChildren),
                 joinDate: data.joinDate,
@@ -487,6 +490,23 @@ export default function CreateEmployeePage() {
                                     <FieldContent>
                                         <Input id="age" readOnly value={ageValue} className="bg-muted" />
                                     </FieldContent>
+                                </Field>
+
+                                <Field>
+                                    <FieldLabel>{requiredLabel("Gender")}</FieldLabel>
+                                    <FieldContent>
+                                        <div className="flex gap-4">
+                                            <label className="flex items-center gap-2">
+                                                <input type="radio" value="Male" {...register("gender")} />
+                                                Male
+                                            </label>
+                                            <label className="flex items-center gap-2">
+                                                <input type="radio" value="Female" {...register("gender")} />
+                                                Female
+                                            </label>
+                                        </div>
+                                    </FieldContent>
+                                    <FieldError errors={errors.gender ? [errors.gender] : []} />
                                 </Field>
 
                                 <Field>

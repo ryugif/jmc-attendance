@@ -161,6 +161,7 @@ export async function createEmployee(data: {
     fullAddress: string;
     homeToOfficeDistance: number;
     dateOfBirth: string;
+    gender: "Male" | "Female";
     maritalStatus: EmployeeMaritalStatus;
     numberOfChildren: number;
     joinDate: string;
@@ -270,6 +271,7 @@ export async function createEmployee(data: {
         homeToOfficeDistance: Number(data.homeToOfficeDistance),
         dateOfBirth: dateOfBirthValue,
         age: employeeAge,
+        gender: data.gender ?? "Male",
         maritalStatus: data.maritalStatus,
         numberOfChildren: Number(data.numberOfChildren || 0),
         joinDate: joinDateValue,
@@ -313,6 +315,7 @@ export async function updateEmployee(
         fullAddress?: string;
         homeToOfficeDistance?: number;
         dateOfBirth?: string;
+        gender?: "Male" | "Female";
         maritalStatus?: EmployeeMaritalStatus;
         numberOfChildren?: number;
         joinDate?: string;
@@ -408,6 +411,7 @@ export async function updateEmployee(
             homeToOfficeDistance: data.homeToOfficeDistance ?? existing.homeToOfficeDistance,
             dateOfBirth: nextDateOfBirthValue,
             age: nextAge,
+            gender: data.gender ?? existing.gender,
             maritalStatus: data.maritalStatus ?? existing.maritalStatus,
             numberOfChildren: data.numberOfChildren ?? existing.numberOfChildren,
             joinDate: nextJoinDateValue,
@@ -558,6 +562,7 @@ export async function getEmployeeDetail(id: string) {
             homeToOfficeDistance: employee.homeToOfficeDistance,
             dateOfBirth: employee.dateOfBirth,
             age: employee.age,
+            gender: employee.gender,
             maritalStatus: employee.maritalStatus,
             numberOfChildren: employee.numberOfChildren,
             joinDate: employee.joinDate,

@@ -22,6 +22,7 @@ interface EmployeeDetails {
     homeToOfficeDistance: number;
     dateOfBirth: string;
     age: number;
+    gender: "Male" | "Female";
     maritalStatus: "Married" | "Not Married";
     numberOfChildren: number;
     joinDate: string;
@@ -63,6 +64,7 @@ function normalizeEmployeeDetails(data: Record<string, unknown>): EmployeeDetail
         homeToOfficeDistance: Number(details.homeToOfficeDistance ?? 0),
         dateOfBirth: toStringDate(details.dateOfBirth),
         age: Number(details.age ?? 0),
+        gender: (details.gender as EmployeeDetails["gender"]) ?? "Male",
         maritalStatus: (details.maritalStatus as EmployeeDetails["maritalStatus"]) ?? "Married",
         numberOfChildren: Number(details.numberOfChildren ?? 0),
         joinDate: toStringDate(details.joinDate),
@@ -132,6 +134,7 @@ export default function EmployeeDetailPage() {
                         <DetailItem label="Home-to-Office Distance" value={`${employee.homeToOfficeDistance} km`} />
                         <DetailItem label="Date of Birth" value={employee.dateOfBirth} />
                         <DetailItem label="Age" value={String(employee.age)} />
+                        <DetailItem label="Gender" value={employee.gender} />
                         <DetailItem label="Marital Status" value={employee.maritalStatus} />
                         <DetailItem label="Children" value={String(employee.numberOfChildren)} />
                         <DetailItem label="Join Date" value={employee.joinDate} />

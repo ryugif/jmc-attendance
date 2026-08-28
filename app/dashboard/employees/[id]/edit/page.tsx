@@ -37,6 +37,7 @@ const employeeSchema = z.object({
     homeToOfficeDistance: z.coerce.number().min(0, "Distance must be positive").max(99, "Distance must be max 2 digits"),
     dateOfBirth: z.string().min(1, "Date of birth is required"),
     age: z.coerce.number().min(0),
+    gender: z.enum(["Male", "Female"]),
     maritalStatus: z.enum(["Married", "Not Married"]),
     numberOfChildren: z.coerce.number().min(0).max(99),
     joinDate: z.string().min(1, "Join date is required"),
@@ -109,6 +110,7 @@ export default function EditEmployeePage() {
             homeToOfficeDistance: 0,
             dateOfBirth: "",
             age: 0,
+            gender: "Male",
             maritalStatus: "Married",
             numberOfChildren: 0,
             joinDate: "",
@@ -158,6 +160,7 @@ export default function EditEmployeePage() {
                     homeToOfficeDistance?: number;
                     dateOfBirth?: string | Date | null;
                     age?: number;
+                    gender?: "Male" | "Female";
                     maritalStatus?: "Married" | "Not Married";
                     numberOfChildren?: number;
                     joinDate?: string | Date | null;
@@ -184,6 +187,7 @@ export default function EditEmployeePage() {
                 setValue("homeToOfficeDistance", Number(employee.homeToOfficeDistance ?? 0));
                 setValue("dateOfBirth", toDateInputValue(employee.dateOfBirth));
                 setValue("age", Number(employee.age ?? 0));
+                setValue("gender", employee.gender ?? "Male");
                 setValue("maritalStatus", employee.maritalStatus ?? "Married");
                 setValue("numberOfChildren", Number(employee.numberOfChildren ?? 0));
                 setValue("joinDate", toDateInputValue(employee.joinDate));

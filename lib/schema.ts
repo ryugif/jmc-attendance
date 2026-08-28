@@ -338,6 +338,7 @@ export const employee = mysqlTable(
         homeToOfficeDistance: int("home_to_office_distance").notNull(),
         dateOfBirth: date("date_of_birth").notNull(),
         age: int("age").notNull(),
+        gender: mysqlEnum("gender", ["Male", "Female"]).notNull().default("Male"),
         maritalStatus: mysqlEnum("marital_status", ["Married", "Not Married"]).notNull(),
         numberOfChildren: int("number_of_children").notNull().default(0),
         joinDate: date("join_date").notNull(),
