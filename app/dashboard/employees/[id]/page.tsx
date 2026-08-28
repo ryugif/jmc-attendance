@@ -110,8 +110,8 @@ export default function EmployeeDetailPage() {
             <GlobalHeader title="Employee Detail" description={`View the complete profile for ${employee.name}.`} />
 
             <div className="rounded-lg border border-input bg-card p-6">
-                <div className="grid gap-6 md:grid-cols-[180px_1fr]">
-                    <div className="flex items-center justify-center">
+                <div className="w-full flex flex-col gap-8">
+                    <div className="flex items-start justify-start">
                         <div className="flex h-32 w-32 items-center justify-center overflow-hidden rounded-full border border-input bg-muted text-sm text-muted-foreground">
                             {employee.photoUrl ? (
                                 <Image src={employee.photoUrl} alt={employee.name} width={128} height={128} className="h-full w-full object-cover" />
@@ -120,8 +120,7 @@ export default function EmployeeDetailPage() {
                             )}
                         </div>
                     </div>
-
-                    <div className="grid gap-4 md:grid-cols-2">
+                    <div className="grid gap-4 md:grid-cols-2 w-full">
                         <DetailItem label="NIP" value={employee.nip} />
                         <DetailItem label="Name" value={employee.name} />
                         <DetailItem label="Email" value={employee.email} />
@@ -142,7 +141,7 @@ export default function EmployeeDetailPage() {
                         <DetailItem label="Status" value={employee.status} />
                         <div className="md:col-span-2">
                             <div className="text-sm font-medium text-muted-foreground">Address</div>
-                            <div className="mt-1 rounded-md border border-input bg-muted/30 p-3 text-sm">{employee.fullAddress}</div>
+                            <div className="mt-1 text-sm">{employee.fullAddress}</div>
                         </div>
                     </div>
                 </div>
