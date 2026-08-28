@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { jsPDF } from "jspdf";
 
 import GlobalHeader from "@/components/global-header";
 import { Button } from "@/components/ui/button";
@@ -202,14 +203,43 @@ export default function EmployeesPage() {
     };
 
     const handleDownloadPdf = () => {
-        const content = employees.map((employee) => `${employee.nip} | ${employee.name} | ${employee.position} | ${employee.status}`).join("\n");
-        const blob = new Blob([content], { type: "application/pdf" });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = "employees.pdf";
-        link.click();
-        URL.revokeObjectURL(url);
+        if (!employees.length) {
+            return;
+        }
+
+        const doc = new jsPDF({ unit: "pt", format: "a4" });
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const marginX = 40;
+        const startY = 60;
+        const lineHeight = 16;
+        const maxTextWidth = pageWidth - marginX * 2;
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(14);
+        doc.text("Employee List", marginX, 36);
+
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(10);
+
+        let currentY = startY;
+
+        for (const [index, employee] of employees.entries()) {
+            const line = `${index + 1}. ${employee.nip} | ${employee.name} | ${employee.position} | ${employee.status}`;
+            const wrapped = doc.splitTextToSize(line, maxTextWidth) as string[];
+
+            for (const wrappedLine of wrapped) {
+                if (currentY > pageHeight - 40) {
+                    doc.addPage();
+                    currentY = 40;
+                }
+
+                doc.text(wrappedLine, marginX, currentY);
+                currentY += lineHeight;
+            }
+        }
+
+        doc.save("employees.pdf");
     };
 
     const handleSort = (field: SortField) => {
