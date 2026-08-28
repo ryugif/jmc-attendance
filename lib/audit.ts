@@ -2,28 +2,12 @@ import { and, asc, count, desc, eq, gte, like, lte, or, type SQL } from "drizzle
 import { randomUUID } from "node:crypto";
 
 import { db } from "@/lib/db";
+import { AUDIT_ACTIONS, AUDIT_MODULES, type AuditAction, type AuditModule } from "@/lib/audit-helpers";
+import { normalizeModuleName } from "@/lib/rbac";
 import { auditLog } from "@/lib/schema";
 
-export const AUDIT_ACTIONS = ["CREATE", "READ", "UPDATE", "DELETE", "LOGIN", "LOGOUT"] as const;
-
-export const AUDIT_MODULES = {
-    DASHBOARD: "Dashboard",
-    USERS: "Users",
-    EMPLOYEES: "Employee",
-    ATTENDANCE: "Attendance",
-    TRANSPORT_ALLOWANCE: "Transport Allowance",
-    TRANSPORT_ALLOWANCE_SETTINGS: "Transport Allowance Settings",
-    SETTINGS: "Settings",
-    PROVINCE: "Province",
-    REGENCY: "Regency",
-    DISTRICT: "District",
-    DEPARTMENT: "Department",
-    JOB_POSITION: "Job Position",
-    LOG: "Audit Log",
-} as const;
-
-export type AuditAction = (typeof AUDIT_ACTIONS)[number];
-export type AuditModule = (typeof AUDIT_MODULES)[keyof typeof AUDIT_MODULES];
+export { AUDIT_ACTIONS, AUDIT_MODULES };
+export type { AuditAction, AuditModule };
 
 export type AuditLogEntry = {
     userId: string;
@@ -73,42 +57,8 @@ function parseMetadata(metadata: string | null) {
     }
 }
 
-export function formatAuditAction(action: string) {
-    switch (action) {
-        case "CREATE":
-            return "Create";
-        case "READ":
-            return "Read";
-        case "UPDATE":
-            return "Update";
-        case "DELETE":
-            return "Delete";
-        case "LOGIN":
-            return "Login";
-        case "LOGOUT":
-            return "Logout";
-        default:
-            return action;
-    }
-}
-
-export function getAuditActionBadgeClass(action: string) {
-    switch (action) {
-        case "CREATE":
-            return "bg-emerald-500/10 text-emerald-700";
-        case "READ":
-            return "bg-sky-500/10 text-sky-700";
-        case "UPDATE":
-            return "bg-amber-500/10 text-amber-700";
-        case "DELETE":
-            return "bg-red-500/10 text-red-700";
-        case "LOGIN":
-            return "bg-blue-500/10 text-blue-700";
-        case "LOGOUT":
-            return "bg-zinc-500/10 text-zinc-700";
-        default:
-            return "bg-zinc-500/10 text-zinc-700";
-    }
+function normalizeFilterValue(value?: string | null) {
+    return value?.trim() || undefined;
 }
 
 export async function recordAuditLog(entry: AuditLogEntry) {
@@ -167,21 +117,26 @@ export async function getAuditLogList({
 }) {
     const offset = (page - 1) * pageSize;
     const clauses: SQL[] = [];
+    const normalizedUserId = normalizeFilterValue(filters.userId);
+    const normalizedModule = normalizeFilterValue(filters.module);
+    const normalizedAction = normalizeFilterValue(filters.action)?.toUpperCase();
+    const normalizedSearch = normalizeFilterValue(filters.search);
 
-    if (filters.userId) {
-        clauses.push(eq(auditLog.userId, filters.userId));
+    if (normalizedUserId) {
+        clauses.push(eq(auditLog.userId, normalizedUserId));
     }
 
-    if (filters.module) {
-        clauses.push(eq(auditLog.module, filters.module));
+    if (normalizedModule) {
+        const aliasModule = normalizeModuleName(normalizedModule);
+        clauses.push(eq(auditLog.module, aliasModule));
     }
 
-    if (filters.action) {
-        clauses.push(eq(auditLog.action, filters.action as AuditAction));
+    if (normalizedAction) {
+        clauses.push(eq(auditLog.action, normalizedAction as AuditAction));
     }
 
-    if (filters.search) {
-        const normalized = `%${filters.search.trim()}%`;
+    if (normalizedSearch) {
+        const normalized = `%${normalizedSearch}%`;
         clauses.push(
             or(
                 like(auditLog.userName, normalized),
@@ -189,6 +144,7 @@ export async function getAuditLogList({
                 like(auditLog.action, normalized),
                 like(auditLog.description, normalized),
                 like(auditLog.resourceId, normalized),
+                like(auditLog.userId, normalized),
             ) as SQL,
         );
     }
@@ -198,7 +154,9 @@ export async function getAuditLogList({
     }
 
     if (filters.to) {
-        clauses.push(lte(auditLog.createdAt, filters.to));
+        const endOfDay = new Date(filters.to);
+        endOfDay.setHours(23, 59, 59, 999);
+        clauses.push(lte(auditLog.createdAt, endOfDay));
     }
 
     const whereClause = clauses.length > 0 ? and(...clauses) : undefined;

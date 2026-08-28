@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { auth } from "@/lib/auth";
-import { formatAuditAction, getAuditActionBadgeClass, getAuditLogById } from "@/lib/audit";
+import { formatAuditAction, getAuditActionBadgeClass } from "@/lib/audit-helpers";
+import { getAuditLogById } from "@/lib/audit";
 import { getUserModulePermission } from "@/lib/rbac";
 
 export default async function AuditLogDetailPage({ params }: { params: Promise<{ id: string }> }) {

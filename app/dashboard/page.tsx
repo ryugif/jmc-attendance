@@ -7,6 +7,7 @@ import { auth } from "@/lib/auth";
 import { AUDIT_ACTIONS, AUDIT_MODULES } from "@/lib/audit";
 import { logAuditEvent } from "@/lib/audit-context";
 import { getDashboardDataForUser, type DashboardEmployeeSummary } from "@/lib/dashboard";
+import { getUserPermissionMap } from "@/lib/rbac";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -123,6 +124,13 @@ export default async function DashboardPage() {
         action: AUDIT_ACTIONS[1],
         description: "Dashboard page accessed.",
     });
+
+    const permissionMap = await getUserPermissionMap(session.user.id);
+    const canViewDashboard = permissionMap["Dashboard"] ?? false;
+
+    if (!canViewDashboard) {
+        redirect("/sign-in");
+    }
 
     if (roleName === "Superadmin" || roleName === "HR Admin") {
         return <WelcomeCard userName={userName} role={roleName} />;

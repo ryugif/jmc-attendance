@@ -1,18 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { IconChevronDown, IconChevronUp, IconSearch, IconZoomExclamation } from "@tabler/icons-react";
 
 import GlobalHeader from "@/components/global-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { Input } from "@/components/ui/input";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { AUDIT_ACTIONS, AUDIT_MODULES, formatAuditAction, getAuditActionBadgeClass } from "@/lib/audit";
+import { AUDIT_ACTIONS, AUDIT_MODULES, formatAuditAction, getAuditActionBadgeClass } from "@/lib/audit-helpers";
 
 type SortField = "createdAt" | "userName" | "module" | "action";
 type SortDirection = "asc" | "desc";
@@ -52,44 +52,48 @@ export default function AuditLogClient() {
 
     const pageSize = 10;
 
-    const fetchRows = async (page: number) => {
-        setLoading(true);
-        try {
-            const query = new URLSearchParams({
-                page: String(page),
-                pageSize: String(pageSize),
-                sortField,
-                sortDirection,
-            });
+    const fetchRows = useCallback(
+        async (page: number) => {
+            setLoading(true);
+            try {
+                const query = new URLSearchParams({
+                    page: String(page),
+                    pageSize: String(pageSize),
+                    sortField,
+                    sortDirection,
+                });
 
-            if (selectedUserId !== "all") query.set("userId", selectedUserId);
-            if (selectedModule !== "all") query.set("module", selectedModule);
-            if (selectedAction !== "all") query.set("action", selectedAction);
-            if (searchQuery.trim()) query.set("search", searchQuery.trim());
-            if (fromDate) query.set("from", fromDate);
-            if (toDate) query.set("to", toDate);
+                if (selectedUserId !== "all") query.set("userId", selectedUserId);
+                if (selectedModule !== "all") query.set("module", selectedModule);
+                if (selectedAction !== "all") query.set("action", selectedAction);
+                if (searchQuery.trim()) query.set("search", searchQuery.trim());
+                if (fromDate) query.set("from", fromDate);
+                if (toDate) query.set("to", toDate);
 
-            const response = await fetch(`/api/audit-logs?${query.toString()}`);
-            const payload = await response.json();
+                const response = await fetch(`/api/audit-logs?${query.toString()}`);
+                const payload = await response.json();
 
-            if (!response.ok) {
-                throw new Error(payload?.error || "Failed to load audit logs.");
+                if (!response.ok) {
+                    throw new Error(payload?.error || "Failed to load audit logs.");
+                }
+
+                setRows(payload.data ?? []);
+                setUsers(payload.users ?? []);
+                setPagination(payload.pagination ?? { page, pageSize, total: 0, totalPages: 1 });
+            } catch (error) {
+                console.error("Error loading audit logs:", error);
+                setRows([]);
+            } finally {
+                setLoading(false);
             }
-
-            setRows(payload.data ?? []);
-            setUsers(payload.users ?? []);
-            setPagination(payload.pagination ?? { page, pageSize, total: 0, totalPages: 1 });
-        } catch (error) {
-            console.error("Error loading audit logs:", error);
-            setRows([]);
-        } finally {
-            setLoading(false);
-        }
-    };
+        },
+        [fromDate, pageSize, searchQuery, selectedAction, selectedModule, selectedUserId, sortDirection, sortField, toDate],
+    );
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         void fetchRows(currentPage);
-    }, [currentPage, selectedUserId, selectedModule, selectedAction, fromDate, toDate, sortField, sortDirection, searchQuery]);
+    }, [currentPage, fetchRows]);
 
     const handleSort = (field: SortField) => {
         if (sortField === field) {
@@ -152,7 +156,10 @@ export default function AuditLogClient() {
                     <IconSearch className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
                         value={searchQuery}
-                        onChange={(event) => setSearchQuery(event.target.value)}
+                        onChange={(event) => {
+                            setSearchQuery(event.target.value);
+                            setCurrentPage(1);
+                        }}
                         placeholder="Search user, module, action, description, or resource ID..."
                         className="pl-9"
                     />

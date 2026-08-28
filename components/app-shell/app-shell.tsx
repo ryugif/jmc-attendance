@@ -23,9 +23,11 @@ import Image from "next/image";
 
 export default function AppShell({
     userName,
+    permissions = {},
     children,
 }: {
     userName: string;
+    permissions?: Record<string, boolean>;
     children?: ReactNode;
 }) {
     const router = useRouter();
@@ -97,7 +99,7 @@ export default function AppShell({
             </header>
 
             <div className="mx-auto flex w-full flex-1 flex-col overflow-auto">
-                <AppShellNav />
+                <AppShellNav permissions={permissions} />
 
                 <section className="flex-1 overflow-auto">
                     <div className="rounded-2xl border border-zinc-200 bg-white shadow-sm">

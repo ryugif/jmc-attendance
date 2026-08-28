@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import AppShell from "@/components/app-shell/app-shell";
 import { db } from "@/lib/db";
+import { getUserPermissionMap } from "@/lib/rbac";
 import { user } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 
@@ -31,9 +32,12 @@ export default async function DashboardLayout({
         redirect("/sign-in");
     }
 
+    const permissions = await getUserPermissionMap(session.user.id);
+
     return (
         <AppShell
             userName={session.user.name || "User Name"}
+            permissions={permissions}
         >
             {children}
         </AppShell>
