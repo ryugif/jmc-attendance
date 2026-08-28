@@ -4,8 +4,9 @@ import { getAttendanceSummary, getDefaultAttendancePeriod } from "@/lib/attendan
 
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
-    const year = Number(searchParams.get("year") ?? getDefaultAttendancePeriod().year);
-    const month = Number(searchParams.get("month") ?? getDefaultAttendancePeriod().month);
+    const defaultPeriod = await getDefaultAttendancePeriod();
+    const year = Number(searchParams.get("year") ?? defaultPeriod.year);
+    const month = Number(searchParams.get("month") ?? defaultPeriod.month);
 
     const data = await getAttendanceSummary(year, month);
     return NextResponse.json(data);

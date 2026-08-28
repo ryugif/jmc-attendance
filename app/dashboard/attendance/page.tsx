@@ -1,16 +1,25 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 
 import GlobalHeader from "@/components/global-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { getAttendanceSummary, getDefaultAttendancePeriod, getAttendanceTemplateCsv } from "@/lib/attendance";
+
+function getDefaultAttendancePeriod() {
+    const now = new Date();
+    const previousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+
+    return {
+        year: previousMonth.getFullYear(),
+        month: previousMonth.getMonth() + 1,
+    };
+}
 
 export default function AttendancePage() {
-    const defaultPeriod = useMemo(() => getDefaultAttendancePeriod(), []);
+    const defaultPeriod = getDefaultAttendancePeriod();
     const [year, setYear] = useState(defaultPeriod.year);
     const [month, setMonth] = useState(defaultPeriod.month);
     const [rows, setRows] = useState<any[]>([]);
@@ -20,7 +29,11 @@ export default function AttendancePage() {
     const load = async (selectedYear: number, selectedMonth: number) => {
         setLoading(true);
         try {
-            const data = await getAttendanceSummary(selectedYear, selectedMonth);
+            const response = await fetch(`/api/attendance?year=${selectedYear}&month=${selectedMonth}`);
+            if (!response.ok) {
+                throw new Error("Failed to load attendance summary.");
+            }
+            const data = await response.json();
             setRows(data);
         } finally {
             setLoading(false);
@@ -31,8 +44,13 @@ export default function AttendancePage() {
         void load(year, month);
     }, [year, month]);
 
-    const handleDownloadTemplate = () => {
-        const csv = getAttendanceTemplateCsv();
+    const handleDownloadTemplate = async () => {
+        const response = await fetch("/api/attendance/template");
+        if (!response.ok) {
+            throw new Error("Failed to download attendance template.");
+        }
+
+        const csv = await response.text();
         const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");

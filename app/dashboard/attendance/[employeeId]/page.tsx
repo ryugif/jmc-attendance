@@ -6,6 +6,7 @@ import GlobalHeader from "@/components/global-header";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export default function AttendanceDetailPage({ params }: { params: { employeeId: string } }) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [records, setRecords] = useState<any[]>([]);
     const [employeeName, setEmployeeName] = useState("Employee");
     const [loading, setLoading] = useState(true);
@@ -53,6 +54,13 @@ export default function AttendanceDetailPage({ params }: { params: { employeeId:
                         </TableRow>
                     </TableHeader>
                     <TableBody>
+                        {records.length > 0 ? null : (
+                            <TableRow>
+                                <TableCell colSpan={8} className="text-center">
+                                    No attendance records found.
+                                </TableCell>
+                            </TableRow>
+                        )}
                         {records.map((record) => (
                             <TableRow key={record.id}>
                                 <TableCell>{record.date}</TableCell>

@@ -2,9 +2,9 @@
 
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
-import { and, asc, desc, eq, gte, lte } from "drizzle-orm";
+import { and, asc, desc, eq, gte, lte, type InferInsertModel } from "drizzle-orm";
 
-import { evaluateAttendanceStatus } from "@/lib/attendance-logic";
+import { evaluateAttendanceStatus, OFFICE_LOCATIONS } from "@/lib/attendance-logic";
 import { db } from "@/lib/db";
 import { attendance, employee } from "@/lib/schema";
 
@@ -26,7 +26,7 @@ export type AttendanceRecord = {
     createdAt: Date;
 };
 
-export function getDefaultAttendancePeriod() {
+export async function getDefaultAttendancePeriod() {
     const now = new Date();
     const previousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
 
@@ -82,9 +82,20 @@ function normalizeVerifier(value?: string | null): AttendanceRecord["verifier"] 
     return "Lead";
 }
 
+function normalizeOfficeLocation(value?: string | null): (typeof OFFICE_LOCATIONS)[number] | null {
+    if (!value) {
+        return null;
+    }
+
+    return OFFICE_LOCATIONS.includes(value as (typeof OFFICE_LOCATIONS)[number])
+        ? (value as (typeof OFFICE_LOCATIONS)[number])
+        : null;
+}
+
 export async function getAttendanceSummary(year: number, month: number) {
-    const targetYear = Number.isFinite(Number(year)) ? Number(year) : getDefaultAttendancePeriod().year;
-    const targetMonth = Number.isFinite(Number(month)) ? Number(month) : getDefaultAttendancePeriod().month;
+    const defaultPeriod = await getDefaultAttendancePeriod();
+    const targetYear = Number.isFinite(Number(year)) ? Number(year) : defaultPeriod.year;
+    const targetMonth = Number.isFinite(Number(month)) ? Number(month) : defaultPeriod.month;
 
     const startDate = new Date(Date.UTC(targetYear, targetMonth - 1, 1));
     const endDate = new Date(Date.UTC(targetYear, targetMonth, 0, 23, 59, 59, 999));
@@ -247,22 +258,24 @@ export async function createAttendanceRecord(input: {
     const nextStatus = nextType === "Present" ? evaluation.status : "Not Fulfilled";
 
     const id = randomUUID();
-    await db.insert(attendance).values({
+    const record: InferInsertModel<typeof attendance> = {
         id,
         employeeId: input.employeeId,
         attendanceDate,
         attendanceType: nextType,
         checkInTime: input.checkInTime ?? null,
         checkOutTime: input.checkOutTime ?? null,
-        checkInLocation: input.checkInLocation ?? null,
-        checkOutLocation: input.checkOutLocation ?? null,
+        checkInLocation: normalizeOfficeLocation(input.checkInLocation),
+        checkOutLocation: normalizeOfficeLocation(input.checkOutLocation),
         effectiveWorkingHours: String(Number(evaluation.effectiveWorkingHours.toFixed(1))),
         status: nextStatus,
         verification: normalizeVerification(input.verification ?? "Approved"),
         verifier: normalizeVerifier(input.verifier ?? "Lead"),
         notes: input.notes ?? null,
         isPresent: nextType === "Present",
-    } as any);
+    };
+
+    await db.insert(attendance).values(record);
 
     revalidatePath("/dashboard/attendance");
     return { success: true, id };
@@ -350,7 +363,7 @@ function parseCsvLine(line: string) {
     return row.map((value) => value.trim());
 }
 
-export function getAttendanceTemplateCsv() {
+export async function getAttendanceTemplateCsv() {
     const headers = [
         "employeeId",
         "attendanceDate",
